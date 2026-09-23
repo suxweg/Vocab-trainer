@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="英単語マスター">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0F1218">
+<link rel="manifest" href="manifest.json">
+<title>中学英単語マスター</title>
+<style>
+:root{
+  --bg:#0F1218; --sf:#171B23; --sf2:#20262F; --sf3:#2A313C;
+  --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.12);
+  --tx:#F2F4F8; --mu:#8A93A3; --mu2:#5C6675;
+  --amber:#FFB547; --amber2:#FF8A3D; --peri:#8B9AFF; --mint:#34D399; --rose:#F87171; --sky:#5AC8FA;
+  --r:20px;
+  --font-ui:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,sans-serif;
+  --font-word:ui-rounded,"SF Pro Rounded","Hiragino Maru Gothic ProN","Arial Rounded MT Bold",-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{
+  font-family:var(--font-ui);color:var(--tx);background:var(--bg);
+  display:flex;flex-direction:column;height:100dvh;
+  -webkit-font-smoothing:antialiased;font-feature-settings:"tnum";
+}
+button{font-family:inherit;cursor:pointer;-webkit-appearance:none;appearance:none}
+.hidden{display:none!important}
+
+/* ── ヘッダー ── */
+.head{display:flex;align-items:center;justify-content:space-between;
+  padding:calc(10px + env(safe-area-inset-top)) 16px 8px;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:8px;font:800 1.1rem var(--font-word);letter-spacing:-.01em}
+.brand i{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--amber),var(--amber2));
+  box-shadow:0 0 14px rgba(255,181,71,.6)}
+.chips{display:flex;gap:6px}
+.chip{display:flex;align-items:center;gap:4px;padding:5px 9px;border-radius:999px;background:var(--sf);
+  border:1px solid var(--line);font:700 .72rem var(--font-ui);color:var(--mu)}
+.chip b{color:var(--tx);font-size:.85rem;font-family:var(--font-word)}
+.chip.streak b{color:var(--amber)}
+
+/* ── セグメント ── */
+.seg{display:flex;margin:0 16px 8px;background:var(--sf);border:1px solid var(--line);border-radius:14px;padding:3px;flex-shrink:0}
+.seg button{flex:1;padding:8px 2px;border:0;background:transparent;color:var(--mu);
+  font:800 .8rem var(--font-ui);border-radius:11px;transition:all .18s;white-space:nowrap}
+.seg button.on{background:var(--sf3);color:var(--tx);box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.seg.grade button.on{background:linear-gradient(135deg,var(--amber),var(--amber2));color:#1A1207}
+.seg button small{font-size:.65rem;opacity:.75;margin-left:2px}
+
+/* ── カテゴリ ── */
+.cats{display:flex;gap:7px;padding:0 16px;overflow-x:auto;flex-shrink:0;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-bottom:8px}
+.cats::-webkit-scrollbar{display:none}
+.cat{white-space:nowrap;padding:6px 13px;border-radius:999px;font:700 .76rem var(--font-ui);
+  border:1px solid var(--line);color:var(--mu);background:var(--sf);flex-shrink:0;transition:all .15s}
+.cat.on{border-color:rgba(255,181,71,.55);color:var(--amber);background:rgba(255,181,71,.1)}
+
+/* ── プログレス ── */
+.pbar{height:3px;background:var(--sf2);margin:0 16px;border-radius:3px;overflow:hidden;flex-shrink:0}
+.pfill{height:100%;width:0;background:linear-gradient(90deg,var(--amber),var(--amber2));border-radius:3px;transition:width .35s ease}
+.pcount{font:600 .68rem var(--font-ui);color:var(--mu2);text-align:right;padding:4px 18px 0;flex-shrink:0;font-family:var(--font-word)}
+
+/* ── メイン ── */
+.main{flex:1;display:flex;flex-direction:column;padding:4px 16px 8px;gap:8px;min-height:0;overflow:hidden}
+
+.card{position:relative;flex-shrink:0;border-radius:var(--r);
+  background:linear-gradient(180deg,#1B2029 0%,#161A21 100%);
+  border:1px solid var(--line);
+  box-shadow:0 24px 44px -24px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.05);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:18px 20px;user-select:none;overflow:hidden;transition:transform .12s;cursor:pointer}
+.card::before{content:"";position:absolute;inset:-40% -20% auto -20%;height:120%;
+  background:radial-gradient(60% 50% at 30% 0%,rgba(255,181,71,.10),transparent 70%);pointer-events:none}
+.card.grow{flex:1}
+.card:active{transform:scale(.985)}
+.card.in{animation:flip .26s ease}
+@keyframes flip{0%{transform:rotateY(70deg) scale(.94);opacity:0}100%{transform:none;opacity:1}}
+.lbl{font:800 .64rem var(--font-ui);letter-spacing:.14em;text-transform:uppercase;color:var(--amber);opacity:.85;margin-bottom:8px}
+.word{font:800 clamp(1.9rem,8.5vw,2.7rem)/1.08 var(--font-word);letter-spacing:-.01em;color:var(--tx);word-break:break-word;max-width:100%}
+.word.ja{font-size:clamp(1.5rem,6.5vw,2.1rem)}
+.pron{font:600 .92rem var(--font-ui);color:var(--sky);letter-spacing:.05em;margin-top:6px;min-height:1.3em}
+.ans{margin-top:12px;padding:10px 18px;border-radius:14px;width:100%;
+  background:rgba(52,211,153,.10);border:1px solid rgba(52,211,153,.35);
+  color:var(--mint);font:800 1.15rem var(--font-word);animation:pop .22s ease}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
+.tap{position:absolute;bottom:10px;right:14px;font:600 .62rem var(--font-ui);color:var(--mu2)}
+.play{position:absolute;top:12px;right:12px;width:38px;height:38px;border-radius:50%;padding:0;border:1px solid rgba(139,154,255,.4);
+  background:rgba(139,154,255,.14);color:var(--peri);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.play:active{transform:scale(.9);background:rgba(139,154,255,.3)}
+.play svg{width:15px;height:15px;margin-left:2px}
+.empty{font:700 .95rem var(--font-ui);color:var(--mu);line-height:1.7}
+
+/* ── 不正解パネル ── */
+.wp{flex:1;min-height:0;border-radius:var(--r);padding:14px 16px;gap:8px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  background:linear-gradient(180deg,#261518,#1B1114);border:1.5px solid rgba(248,113,113,.55);animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.wp .lbl{color:var(--rose);opacity:1;margin:0}
+.wp .big{font:800 clamp(1.7rem,7.5vw,2.6rem)/1.1 var(--font-word);color:#fff;letter-spacing:.02em;word-break:break-word;max-width:100%}
+.wp .pron{color:var(--amber);margin:0}
+.tiles{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;max-width:100%}
+.tile{width:30px;height:38px;border-radius:8px;background:#2E1B20;border:1px solid rgba(248,113,113,.5);
+  display:flex;align-items:center;justify-content:center;font:800 1.1rem var(--font-word);color:var(--amber);flex-shrink:0}
+.tile.sp{width:12px;background:transparent;border:0}
+.wp .ja{font:800 .95rem var(--font-ui);color:#D6DEE8}
+.wp .yours{font:600 .78rem var(--font-ui);color:var(--mu)}
+.wp .yours s{color:#ff8a94}
+.wpplay{display:flex;align-items:center;gap:6px;padding:8px 18px;border-radius:999px;border:1px solid rgba(139,154,255,.45);
+  background:rgba(139,154,255,.14);color:var(--peri);font:800 .82rem var(--font-ui)}
+.wpplay svg{width:12px;height:12px}
+
+/* ── 4択 ── */
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex-shrink:0}
+.ch{padding:14px 10px;border-radius:16px;border:1px solid var(--line2);background:var(--sf2);color:var(--tx);
+  font:700 .95rem/1.3 var(--font-ui);text-align:center;transition:all .15s;min-height:56px}
+.ch:active:not(:disabled){transform:scale(.96)}
+.ch:disabled{cursor:default}
+.ch.ok{background:rgba(52,211,153,.16);border-color:var(--mint);color:var(--mint)}
+.ch.ng{background:rgba(248,113,113,.14);border-color:var(--rose);color:var(--rose)}
+.ch small{display:block;font:600 .72rem var(--font-ui);opacity:.85;margin-top:2px}
+
+/* ── 入力 ── */
+.inp{width:100%;padding:14px 16px;border-radius:16px;border:1px solid var(--line2);background:var(--sf2);color:var(--tx);
+  font:700 1.2rem var(--font-word);letter-spacing:.05em;text-align:center;outline:none;flex-shrink:0;transition:border-color .15s}
+.inp:focus{border-color:var(--peri)}
+.inp.ok{border-color:var(--mint);background:rgba(52,211,153,.12);color:var(--mint)}
+.inp.ng{border-color:var(--rose);background:rgba(248,113,113,.14);color:#FF8A94}
+
+.fb{font:800 .88rem var(--font-ui);text-align:center;min-height:20px;flex-shrink:0}
+.fb.ok{color:var(--mint)}.fb.ng{color:var(--rose)}
+
+/* ── ボトム ── */
+.bottom{display:flex;gap:8px;padding:6px 16px calc(12px + env(safe-area-inset-bottom));flex-shrink:0}
+.btn{flex:1;padding:15px 8px;border-radius:16px;border:1px solid var(--line2);background:var(--sf);color:var(--tx);
+  font:800 .95rem var(--font-ui);transition:all .15s;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn.pri{flex:2;border:0;color:#1A1207;background:linear-gradient(135deg,var(--amber),var(--amber2));
+  box-shadow:0 10px 22px -10px rgba(255,181,71,.7)}
+.btn.ok{flex:1.4;background:rgba(52,211,153,.16);border-color:var(--mint);color:var(--mint)}
+.btn.ng{flex:1;background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.6);color:var(--rose)}
+
+/* ── 結果 ── */
+.result{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px}
+.result .emo{font-size:3.2rem;animation:bounce .7s ease}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.result h2{font:800 1.5rem var(--font-word);color:var(--amber)}
+.result .score{font:800 3rem/1 var(--font-word)}
+.result .score span{font-size:1.2rem;color:var(--mint)}
+.result p{font:600 .88rem var(--font-ui);color:var(--mu)}
+.result .acts{display:flex;gap:8px;margin-top:12px;width:100%;max-width:340px}
+.result .acts .btn{padding:14px 10px}
+
+.toast{position:fixed;top:calc(14px + env(safe-area-inset-top));right:14px;z-index:99;padding:7px 14px;border-radius:999px;
+  background:linear-gradient(135deg,#FF6B6B,#FF8A3D);color:#fff;font:800 .82rem var(--font-ui);
+  box-shadow:0 8px 24px -6px rgba(255,107,107,.6);animation:slide .3s ease}
+@keyframes slide{from{transform:translateX(60px);opacity:0}to{transform:none;opacity:1}}
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div class="brand"><i></i>英単語マスター</div>
+  <div class="chips">
+    <div class="chip">✓<b id="stScore">0</b></div>
+    <div class="chip streak">🔥<b id="stStreak">0</b></div>
+    <div class="chip">📚<b id="stStudied">0</b></div>
+  </div>
+</div>
+
+<div class="seg grade" id="segGrade"></div>
+<div class="seg" id="segMode"></div>
+<div class="cats" id="lvs" style="margin-bottom:6px"></div>
+<div class="cats" id="cats"></div>
+<div class="pbar"><div class="pfill" id="pfill"></div></div>
+<div class="pcount" id="pcount"></div>
+
+<div class="main">
+  <div class="card" id="card" onclick="onCard()">
+    <button class="play" id="play" onclick="event.stopPropagation();speak(S.cur&&S.cur.en)" aria-label="発音">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 2.5a.5.5 0 0 1 .757-.429l9 5a.5.5 0 0 1 0 .858l-9 5A.5.5 0 0 1 3 12.5v-10z"/></svg>
+    </button>
+    <div class="lbl" id="lbl"></div>
+    <div class="word" id="word"></div>
+    <div class="pron" id="pron"></div>
+    <div class="ans hidden" id="ans"></div>
+    <div class="tap" id="tap">タップで答え</div>
+  </div>
+
+  <div class="wp hidden" id="wp">
+    <div class="lbl">正しいスペル</div>
+    <div class="big" id="wpWord"></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="pron" id="wpPron"></div>
+    <div class="ja" id="wpJa"></div>
+    <div class="yours" id="wpYours"></div>
+    <button class="wpplay" onclick="speak(S.cur&&S.cur.en)">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 2.5a.5.5 0 0 1 .757-.429l9 5a.5.5 0 0 1 0 .858l-9 5A.5.5 0 0 1 3 12.5v-10z"/></svg>発音を聞く
+    </button>
+  </div>
+
+  <div class="choices hidden" id="choices"></div>
+  <input class="inp hidden" id="inp" type="text" placeholder="英語を入力" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
+  <div class="fb" id="fb"></div>
+
+  <div class="result hidden" id="result">
+    <div class="emo" id="rEmo">🎉</div>
+    <h2>おつかれさま！</h2>
+    <div class="score" id="rScore"></div>
+    <p id="rMsg"></p>
+    <div class="acts">
+      <button class="btn" onclick="startSession()">もう一度</button>
+      <button class="btn pri hidden" id="rWeak" onclick="setGrade('weak')">苦手を復習</button>
+    </div>
+  </div>
+</div>
+
+<div class="bottom" id="bottom">
+  <button class="btn" id="bL"></button>
+  <button class="btn pri" id="bR"></button>
+</div>
+
+<script>
+const RAW = {"中1":{"動詞①基本":[["go","ゴウ","行く",1],["come","カム","来る",1],["see","スィー","見る・会う",1],["get","ゲット","得る・手に入れる",1],["make","メイク","作る",1],["know","ノウ","知っている",1],["think","スィンク","思う・考える",1],["take","テイク","取る・持っていく",1],["use","ユーズ","使う",1],["want","ウォント","欲しい・〜したい",1],["give","ギヴ","与える",1],["find","ファインド","見つける",1],["tell","テル","伝える・話す",1],["ask","アスク","尋ねる・頼む",1],["call","コール","呼ぶ・電話する",1],["try","トライ","試す",1],["keep","キープ","保つ・続ける",1],["help","ヘルプ","助ける",1],["show","ショウ","見せる",1],["need","ニード","必要とする",1],["love","ラヴ","大好きである",1],["like","ライク","好む",1],["live","リヴ","住む",1],["work","ワーク","働く",1],["start","スタート","始める",1],["stop","ストップ","止まる・止める",1],["open","オウプン","開ける",1],["close","クロウズ","閉める",1],["turn","ターン","曲がる・回す",2],["wait","ウェイト","待つ",1],["have","ハヴ","持っている・食べる",1],["do","ドゥー","する",1],["say","セイ","言う",1],["look","ルック","見る・〜に見える",1],["put","プット","置く",1],["let","レット","〜させる",1],["leave","リーヴ","去る・出発する",1],["meet","ミート","会う",1],["bring","ブリング","持ってくる",1],["mean","ミーン","意味する",1]],"動詞②日常の動作":[["eat","イート","食べる",1],["drink","ドリンク","飲む",1],["run","ラン","走る",1],["walk","ウォーク","歩く",1],["sleep","スリープ","眠る",1],["read","リード","読む",1],["write","ライト","書く",1],["speak","スピーク","話す",1],["talk","トーク","話す・しゃべる",1],["listen","リスン","聞く",1],["hear","ヒアー","聞こえる",2],["watch","ウォッチ","見る・観る",1],["play","プレイ","遊ぶ・（スポーツを）する",1],["study","スタディ","勉強する",1],["learn","ラーン","学ぶ",1],["swim","スウィム","泳ぐ",1],["sing","スィング","歌う",1],["dance","ダンス","踊る",1],["cook","クック","料理する",1],["clean","クリーン","掃除する",1],["wash","ウォッシュ","洗う",1],["buy","バイ","買う",1],["sell","セル","売る",2],["carry","キャリー","運ぶ",2],["draw","ドロー","（線で）描く",1],["paint","ペイント","（絵の具で）描く",3],["cut","カット","切る",1],["throw","スロウ","投げる",2],["catch","キャッチ","捕まえる",2],["stand","スタンド","立つ",1],["sit","スィット","座る",1],["jump","ジャンプ","跳ぶ",1],["ride","ライド","乗る",1],["drive","ドライヴ","運転する",2],["fly","フライ","飛ぶ",1],["climb","クライム","登る",3],["wear","ウェア","着ている",1],["wake","ウェイク","目を覚ます",2],["brush","ブラッシュ","みがく",3],["practice","プラクティス","練習する",1]],"動詞③その他":[["enjoy","インジョイ","楽しむ",1],["hope","ホウプ","望む",2],["visit","ヴィジット","訪れる",1],["join","ジョイン","加わる",1],["teach","ティーチ","教える",1],["answer","アンサー","答える",1],["remember","リメンバー","覚えている",1],["forget","フォーゲット","忘れる",1],["worry","ワリー","心配する",2],["cry","クライ","泣く",3],["laugh","ラフ","笑う",2],["smile","スマイル","微笑む",3],["win","ウィン","勝つ",1],["lose","ルーズ","負ける・失う",2],["send","センド","送る",1],["pay","ペイ","払う",2],["borrow","ボロウ","借りる",3],["lend","レンド","貸す",3],["build","ビルド","建てる",2],["break","ブレイク","壊す",2],["fix","フィックス","直す",2],["move","ムーヴ","動く・引っ越す",2],["travel","トラヴェル","旅行する",2],["collect","コレクト","集める",3],["grow","グロウ","育つ・育てる",2],["become","ビカム","〜になる",2],["feel","フィール","感じる",2],["check","チェック","確認する",2],["count","カウント","数える",2],["hold","ホウルド","持つ・開催する",2],["push","プッシュ","押す",2],["pull","プル","引く",2],["kick","キック","ける",2],["touch","タッチ","触る",2],["shout","シャウト","叫ぶ",3],["arrive","アライヴ","到着する",3]],"名詞①人・家族":[["man","マン","男性",1],["woman","ウーマン","女性",1],["boy","ボイ","男の子",1],["girl","ガール","女の子",1],["baby","ベイビー","赤ちゃん",2],["child","チャイルド","子ども",1],["mother","マザー","母",1],["father","ファーザー","父",1],["parent","ペアレント","親",3],["brother","ブラザー","兄・弟",1],["sister","スィスター","姉・妹",1],["grandfather","グランドファーザー","祖父",3],["grandmother","グランドマザー","祖母",3],["uncle","アンクル","おじ",3],["aunt","アント","おば",3],["cousin","カズン","いとこ",3],["friend","フレンド","友達",1],["classmate","クラスメイト","同級生",3],["teacher","ティーチャー","先生",1],["student","ストゥーデント","生徒",1],["doctor","ドクター","医者",2],["nurse","ナース","看護師",3],["people","ピープル","人々",1],["person","パースン","人",2],["family","ファミリー","家族",1],["neighbor","ネイバー","隣人",3],["king","キング","王",2],["queen","クウィーン","女王",2],["hero","ヒーロウ","英雄",2],["name","ネイム","名前",1],["birthday","バースデイ","誕生日",1],["age","エイジ","年齢",2]],"名詞②学校":[["school","スクール","学校",1],["class","クラス","授業・組",1],["classroom","クラスルーム","教室",1],["club","クラブ","部活",1],["homework","ホウムワーク","宿題",1],["lesson","レスン","授業・レッスン",3],["test","テスト","テスト",2],["textbook","テクストブック","教科書",3],["notebook","ノウトブック","ノート",1],["pencil","ペンスル","鉛筆",1],["pen","ペン","ペン",1],["eraser","イレイサー","消しゴム",3],["ruler","ルーラー","定規",3],["bag","バッグ","かばん",1],["desk","デスク","机",1],["chair","チェア","いす",1],["blackboard","ブラックボード","黒板",3],["computer","コンピューター","コンピューター",2],["dictionary","ディクショネリー","辞書",3],["English","イングリッシュ","英語",1],["Japanese","ジャパニーズ","日本語・日本人",1],["math","マス","数学",1],["science","サイエンス","理科",1],["music","ミュージック","音楽",1],["art","アート","美術",1],["P.E.","ピーイー","体育",3],["history","ヒストリー","歴史",2],["subject","サブジェクト","教科",2],["gym","ジム","体育館",3],["library","ライブラリー","図書館",1],["cafeteria","カフェテリア","食堂",3],["playground","プレイグラウンド","校庭",3],["uniform","ユーニフォーム","制服",3],["question","クウェスチョン","質問",2],["word","ワード","単語",2],["sentence","センテンス","文",3],["letter","レター","手紙・文字",2],["story","ストーリー","物語",2],["grade","グレイド","学年・成績",2],["trip","トリップ","旅行",2]],"名詞③食べ物・飲み物":[["food","フード","食べ物",2],["breakfast","ブレクファスト","朝食",1],["lunch","ランチ","昼食",1],["dinner","ディナー","夕食",1],["rice","ライス","米・ご飯",1],["bread","ブレッド","パン",1],["egg","エッグ","卵",1],["milk","ミルク","牛乳",1],["meat","ミート","肉",3],["fish","フィッシュ","魚",1],["chicken","チキン","鶏肉・ニワトリ",3],["beef","ビーフ","牛肉",3],["vegetable","ヴェジタブル","野菜",3],["fruit","フルート","果物",3],["apple","アップル","りんご",1],["orange","オレンジ","オレンジ",3],["banana","バナーナ","バナナ",3],["grape","グレイプ","ぶどう",3],["strawberry","ストロベリー","いちご",3],["lemon","レモン","レモン",3],["peach","ピーチ","もも",3],["tomato","トメイトウ","トマト",3],["potato","ポテイトウ","じゃがいも",3],["carrot","キャロット","にんじん",3],["onion","アニオン","たまねぎ",3],["cake","ケイク","ケーキ",3],["cookie","クッキー","クッキー",3],["candy","キャンディ","あめ",3],["chocolate","チョコレット","チョコレート",3],["ice cream","アイスクリーム","アイスクリーム",1],["pizza","ピーツァ","ピザ",3],["hamburger","ハンバーガー","ハンバーガー",3],["sandwich","サンドウィッチ","サンドイッチ",3],["salad","サラダ","サラダ",3],["soup","スープ","スープ",3],["curry","カリー","カレー",3],["juice","ジュース","ジュース",3],["tea","ティー","お茶・紅茶",1],["coffee","コフィー","コーヒー",2],["water","ウォーター","水",1]],"名詞④家・もの":[["house","ハウス","家",1],["home","ホウム","家庭・家",1],["room","ルーム","部屋",1],["bedroom","ベッドルーム","寝室",3],["kitchen","キッチン","台所",3],["bathroom","バスルーム","浴室・トイレ",3],["door","ドア","ドア",1],["window","ウィンドウ","窓",1],["floor","フロア","床・階",2],["wall","ウォール","壁",2],["table","テイブル","テーブル",1],["bed","ベッド","ベッド",1],["sofa","ソウファ","ソファ",3],["TV","ティーヴィー","テレビ",1],["phone","フォウン","電話",1],["camera","キャメラ","カメラ",2],["clock","クロック","時計",3],["watch","ウォッチ","腕時計",1],["key","キー","かぎ",2],["box","ボックス","箱",2],["cup","カップ","カップ",2],["glass","グラス","コップ・ガラス",2],["plate","プレイト","皿",3],["knife","ナイフ","ナイフ",3],["fork","フォーク","フォーク",3],["spoon","スプーン","スプーン",3],["chopsticks","チョップスティックス","はし",3],["umbrella","アンブレラ","かさ",3],["ball","ボール","ボール",2],["bike","バイク","自転車",1],["toy","トイ","おもちゃ",3],["doll","ドール","人形",3],["present","プレズント","プレゼント",2],["picture","ピクチャー","写真・絵",2],["money","マニー","お金",2],["ticket","ティケット","チケット",3]],"名詞⑤動物・自然":[["dog","ドッグ","犬",1],["cat","キャット","猫",1],["bird","バード","鳥",1],["rabbit","ラビット","うさぎ",3],["horse","ホース","馬",2],["cow","カウ","牛",3],["pig","ピッグ","ぶた",3],["sheep","シープ","羊",3],["mouse","マウス","ねずみ",3],["monkey","マンキー","さる",3],["elephant","エレファント","ぞう",3],["lion","ライオン","ライオン",3],["tiger","タイガー","とら",3],["bear","ベア","くま",2],["panda","パンダ","パンダ",3],["koala","コウアーラ","コアラ",3],["penguin","ペングウィン","ペンギン",3],["frog","フロッグ","かえる",3],["snake","スネイク","へび",3],["insect","インセクト","昆虫",3],["butterfly","バタフライ","ちょう",3],["bee","ビー","はち",3],["flower","フラワー","花",1],["tree","トリー","木",1],["grass","グラス","草",3],["leaf","リーフ","葉",3],["sun","サン","太陽",1],["moon","ムーン","月",1],["star","スター","星",1],["sky","スカイ","空",1],["sea","スィー","海",1],["river","リヴァー","川",1],["lake","レイク","湖",2],["mountain","マウンテン","山",1],["forest","フォレスト","森",2],["beach","ビーチ","浜辺",2],["island","アイランド","島",2],["rain","レイン","雨",1],["snow","スノウ","雪",1],["wind","ウィンド","風",2],["cloud","クラウド","雲",3],["weather","ウェザー","天気",2]],"名詞⑥街・乗り物":[["city","スィティ","都市",1],["town","タウン","町",1],["village","ヴィリッジ","村",2],["country","カントリー","国・いなか",2],["world","ワールド","世界",2],["park","パーク","公園",1],["station","ステイション","駅",1],["shop","ショップ","店",1],["store","ストア","店",2],["supermarket","スーパーマーケット","スーパー",3],["restaurant","レストラント","レストラン",2],["hospital","ホスピタル","病院",1],["post office","ポウストオフィス","郵便局",2],["police station","ポリースステイション","警察署",2],["bank","バンク","銀行",2],["hotel","ホウテル","ホテル",2],["museum","ミュージーアム","博物館・美術館",2],["zoo","ズー","動物園",3],["temple","テンプル","寺",3],["shrine","シュライン","神社",3],["castle","キャスル","城",3],["bridge","ブリッジ","橋",2],["road","ロウド","道路",2],["street","ストリート","通り",2],["corner","コーナー","角",2],["car","カー","車",1],["bus","バス","バス",1],["train","トレイン","電車",1],["taxi","タクスィ","タクシー",3],["plane","プレイン","飛行機",2],["ship","シップ","船",2],["boat","ボウト","ボート",2],["map","マップ","地図",2],["garden","ガーデン","庭",2],["farm","ファーム","農場",2],["building","ビルディング","建物",2]],"名詞⑦体・服・スポーツ":[["head","ヘッド","頭",1],["face","フェイス","顔",1],["eye","アイ","目",1],["ear","イアー","耳",3],["nose","ノウズ","鼻",3],["mouth","マウス","口",2],["tooth","トゥース","歯",3],["hair","ヘア","髪",2],["hand","ハンド","手",1],["arm","アーム","腕",2],["leg","レッグ","脚",3],["foot","フット","足",1],["finger","フィンガー","指",3],["shirt","シャート","シャツ",1],["T-shirt","ティーシャート","Tシャツ",3],["jacket","ジャケット","ジャケット",3],["coat","コウト","コート",3],["hat","ハット","帽子",3],["cap","キャップ","（つばのある）帽子",3],["shoes","シューズ","靴",1],["socks","ソックス","靴下",3],["pants","パンツ","ズボン",3],["dress","ドレス","ドレス・ワンピース",2],["glasses","グラスィズ","めがね",3],["soccer","サッカー","サッカー",1],["baseball","ベイスボール","野球",1],["basketball","バスケットボール","バスケットボール",3],["tennis","テニス","テニス",1],["volleyball","ヴォリーボール","バレーボール",3],["table tennis","テイブルテニス","卓球",3],["swimming","スウィミング","水泳",3],["judo","ジュードウ","柔道",3],["game","ゲイム","試合・ゲーム",1],["team","ティーム","チーム",1],["player","プレイアー","選手",2],["sport","スポート","スポーツ",2]],"形容詞①様子":[["good","グッド","良い",1],["bad","バッド","悪い",1],["big","ビッグ","大きい",1],["small","スモール","小さい",1],["large","ラージ","大きい・広い",2],["little","リトル","小さい・少しの",2],["long","ロング","長い",1],["short","ショート","短い・背が低い",1],["tall","トール","背が高い",1],["high","ハイ","高い",1],["low","ロウ","低い",2],["fast","ファスト","速い",2],["slow","スロウ","遅い",2],["hot","ホット","暑い・熱い",1],["cold","コウルド","寒い・冷たい",1],["warm","ウォーム","暖かい",2],["cool","クール","涼しい・かっこいい",2],["new","ニュー","新しい",1],["old","オウルド","古い・年をとった",1],["young","ヤング","若い",1],["hard","ハード","難しい・かたい",1],["easy","イージー","簡単な",1],["difficult","ディフィカルト","難しい",2],["heavy","ヘヴィ","重い",2],["light","ライト","軽い・明るい",2],["dark","ダーク","暗い",2],["bright","ブライト","明るい",3],["clean","クリーン","きれいな",1],["dirty","ダーティ","汚い",3],["wet","ウェット","ぬれた",3],["dry","ドライ","乾いた",2],["soft","ソフト","やわらかい",2],["loud","ラウド","（音が）大きい",3],["quiet","クワイエット","静かな",3],["strong","ストロング","強い",2],["weak","ウィーク","弱い",3],["rich","リッチ","金持ちの",2],["poor","プア","貧しい",2],["full","フル","いっぱいの",2],["empty","エンプティ","からの",3]],"形容詞②気持ち・評価":[["happy","ハッピー","幸せな・うれしい",1],["sad","サッド","悲しい",1],["angry","アングリー","怒った",3],["glad","グラッド","うれしい",2],["sorry","ソーリー","すまなく思う・残念な",1],["afraid","アフレイド","こわがって",2],["excited","イクサイティッド","わくわくした",2],["tired","タイアード","疲れた",1],["hungry","ハングリー","おなかがすいた",1],["thirsty","サースティ","のどがかわいた",3],["sick","スィック","病気の",1],["fine","ファイン","元気な・すばらしい",1],["busy","ビジー","忙しい",1],["free","フリー","ひまな・無料の",2],["ready","レディ","準備ができた",2],["sure","シュア","確かな",1],["right","ライト","正しい・右の",1],["wrong","ロング","まちがった",2],["important","インポータント","重要な",2],["interesting","インタレスティング","おもしろい",1],["beautiful","ビューティフル","美しい",1],["cute","キュート","かわいい",1],["pretty","プリティ","きれいな・かなり",2],["funny","ファニー","おかしい",2],["kind","カインド","親切な",1],["nice","ナイス","すてきな",1],["great","グレイト","すばらしい",1],["wonderful","ワンダフル","すばらしい",2],["terrible","テリブル","ひどい",2],["different","ディファレント","ちがった",2],["same","セイム","同じ",2],["popular","ポピュラー","人気のある",1],["special","スペシャル","特別な",2],["favorite","フェイヴァリット","お気に入りの",1],["famous","フェイマス","有名な",1],["delicious","ディリシャス","おいしい",1],["sweet","スウィート","甘い",2],["sleepy","スリーピー","眠い",3],["lucky","ラッキー","幸運な",2],["careful","ケアフル","注意深い",3]],"数・時間・曜日・月":[["one","ワン","1",1],["two","トゥー","2",1],["three","スリー","3",1],["four","フォー","4",1],["five","ファイヴ","5",1],["six","スィックス","6",1],["seven","セヴン","7",1],["eight","エイト","8",1],["nine","ナイン","9",1],["ten","テン","10",1],["eleven","イレヴン","11",1],["twelve","トゥエルヴ","12",1],["twenty","トゥエンティ","20",2],["hundred","ハンドレッド","100",1],["thousand","サウザンド","1000",2],["first","ファースト","1番目の",2],["second","セカンド","2番目の",2],["third","サード","3番目の",2],["Monday","マンデイ","月曜日",1],["Tuesday","チューズデイ","火曜日",1],["Wednesday","ウェンズデイ","水曜日",1],["Thursday","サーズデイ","木曜日",1],["Friday","フライデイ","金曜日",1],["Saturday","サタデイ","土曜日",1],["Sunday","サンデイ","日曜日",1],["January","ジャニュエリー","1月",2],["February","フェブルエリー","2月",2],["March","マーチ","3月",2],["April","エイプリル","4月",2],["May","メイ","5月",2],["June","ジューン","6月",2],["July","ジュライ","7月",2],["August","オーガスト","8月",2],["September","セプテンバー","9月",2],["October","オクトウバー","10月",2],["November","ノウヴェンバー","11月",2],["December","ディセンバー","12月",2],["morning","モーニング","朝",1],["afternoon","アフタヌーン","午後",1],["evening","イーヴニング","夕方",1],["night","ナイト","夜",1],["today","トゥデイ","今日",1],["tomorrow","トゥモロウ","明日",1],["yesterday","イェスタデイ","昨日",1],["week","ウィーク","週",1],["month","マンス","月",1],["year","イヤー","年",1],["hour","アウアー","1時間",2],["minute","ミニット","分",2],["time","タイム","時間・時刻",1],["thirty","サーティ","30",2],["forty","フォーティ","40",2],["fifty","フィフティ","50",2],["sixty","スィクスティ","60",2],["seventy","セヴンティ","70",2],["eighty","エイティ","80",2],["ninety","ナインティ","90",2],["o'clock","オクロック","〜時（ちょうど）",2],["half","ハーフ","半分",2],["quarter","クウォーター","4分の1・15分",2],["noon","ヌーン","正午",2],["midnight","ミッドナイト","真夜中",2],["weekday","ウィークデイ","平日",2],["date","デイト","日付",2],["calendar","キャレンダー","カレンダー",2],["someday","サムデイ","いつか",2],["tonight","トゥナイト","今夜",2]],"色・季節・天気":[["red","レッド","赤",1],["blue","ブルー","青",1],["green","グリーン","緑",1],["yellow","イェロウ","黄色",1],["white","ホワイト","白",1],["black","ブラック","黒",1],["pink","ピンク","ピンク",2],["purple","パープル","紫",2],["brown","ブラウン","茶色",2],["gray","グレイ","灰色",2],["color","カラー","色",2],["spring","スプリング","春",1],["summer","サマー","夏",1],["fall","フォール","秋",1],["winter","ウィンター","冬",1],["season","スィーズン","季節",2],["sunny","サニー","晴れた",1],["cloudy","クラウディ","くもりの",1],["rainy","レイニー","雨の",1],["snowy","スノウイ","雪の",2],["windy","ウィンディ","風の強い",2],["holiday","ホリデイ","休日",2],["vacation","ヴェイケイション","休暇",2],["weekend","ウィークエンド","週末",2]],"副詞・前置詞・疑問詞":[["always","オールウェイズ","いつも",1],["usually","ユージュアリー","たいてい",1],["often","オフン","よく・しばしば",1],["sometimes","サムタイムズ","ときどき",1],["never","ネヴァー","決して〜ない",1],["now","ナウ","今",1],["then","ゼン","そのとき・それから",2],["here","ヒアー","ここに",1],["there","ゼア","そこに",1],["very","ヴェリー","とても",1],["really","リアリー","本当に",2],["too","トゥー","〜もまた・〜すぎる",1],["also","オールソウ","〜もまた",1],["again","アゲン","もう一度",1],["well","ウェル","上手に・元気で",1],["early","アーリー","早く",1],["late","レイト","遅く・遅い",1],["soon","スーン","すぐに",1],["together","トゥゲザー","いっしょに",1],["up","アップ","上へ",1],["down","ダウン","下へ",1],["in","イン","〜の中に",1],["on","オン","〜の上に",1],["at","アット","〜で・〜に",1],["to","トゥー","〜へ",1],["for","フォー","〜のために",1],["with","ウィズ","〜といっしょに",1],["from","フロム","〜から",1],["about","アバウト","〜について",1],["under","アンダー","〜の下に",1],["over","オウヴァー","〜の上に",2],["near","ニアー","〜の近くに",1],["by","バイ","〜のそばに・〜によって",2],["after","アフター","〜の後に",1],["before","ビフォー","〜の前に",1],["and","アンド","そして",1],["but","バット","しかし",1],["or","オア","または",1],["so","ソウ","だから・とても",1],["please","プリーズ","どうぞ",1],["what","ワット","何",1],["who","フー","だれ",1],["when","ウェン","いつ",1],["where","ウェア","どこ",1],["why","ワイ","なぜ",1],["how","ハウ","どのように",1],["which","ウィッチ","どちら",1],["whose","フーズ","だれの",2]]},"中2":{"動詞①":[["understand","アンダースタンド","理解する",1],["believe","ビリーヴ","信じる",1],["decide","ディサイド","決める",1],["agree","アグリー","同意する",1],["begin","ビギン","始める",1],["finish","フィニッシュ","終える",1],["continue","コンティニュー","続ける",1],["change","チェインジ","変える・変わる",1],["choose","チューズ","選ぶ",1],["explain","イクスプレイン","説明する",1],["follow","フォロウ","ついていく・従う",2],["happen","ハプン","起こる",1],["introduce","イントロデュース","紹介する",1],["invite","インヴァイト","招待する",1],["lead","リード","導く",1],["marry","マリー","結婚する",2],["miss","ミス","逃す・寂しく思う",1],["order","オーダー","注文する",1],["pass","パス","渡す・通り過ぎる",1],["plan","プラン","計画する",1],["prepare","プリペア","準備する",1],["receive","リスィーヴ","受け取る",1],["return","リターン","戻る・返す",1],["save","セイヴ","救う・貯める",1],["share","シェア","分け合う",1],["spend","スペンド","（お金・時間を）使う",1],["wish","ウィッシュ","願う",1],["wonder","ワンダー","〜かなと思う",2],["appear","アピア","現れる",2],["disappear","ディサピア","消える",3],["cover","カヴァー","おおう",2],["cross","クロス","横切る",2],["drop","ドロップ","落とす",2],["fall","フォール","落ちる",2],["hurry","ハリー","急ぐ",3],["imagine","イマジン","想像する",2],["notice","ノウティス","気づく",2],["pick","ピック","選ぶ・摘む",2],["reach","リーチ","着く・届く",2],["remind","リマインド","思い出させる",2]],"動詞②":[["act","アクト","行動する・演じる",2],["add","アッド","加える",2],["bake","ベイク","焼く",1],["boil","ボイル","ゆでる・沸かす",1],["burn","バーン","燃える",2],["care","ケア","気にかける",1],["celebrate","セレブレイト","祝う",1],["communicate","コミューニケイト","意思を伝え合う",1],["compare","コンペア","比べる",2],["create","クリエイト","創り出す",2],["die","ダイ","死ぬ",2],["discover","ディスカヴァー","発見する",1],["enter","エンター","入る",2],["exercise","エクササイズ","運動する",1],["fight","ファイト","戦う",2],["guess","ゲス","推測する",1],["hide","ハイド","隠す・隠れる",1],["hit","ヒット","打つ",2],["hurt","ハート","傷つける・痛む",1],["improve","インプルーヴ","改善する",2],["increase","インクリース","増える・増やす",2],["invent","インヴェント","発明する",1],["lie","ライ","横になる・うそをつく",2],["perform","パフォーム","演じる・行う",2],["protect","プロテクト","守る",1],["raise","レイズ","上げる・育てる",1],["relax","リラックス","くつろぐ",1],["repeat","リピート","くり返す",1],["rest","レスト","休む",2],["shake","シェイク","ふる",2],["smell","スメル","においがする",1],["sound","サウンド","〜に聞こえる",2],["taste","テイスト","〜の味がする",1],["waste","ウェイスト","むだにする",2],["exchange","イクスチェインジ","交換する",2],["dig","ディグ","掘る",3],["feed","フィード","えさをやる",1],["fill","フィル","満たす",2],["knock","ノック","ノックする",1],["ring","リング","鳴る",2]],"動詞③":[["attack","アタック","攻撃する",2],["complain","コンプレイン","不平を言う",3],["divide","ディヴァイド","分ける",3],["fail","フェイル","失敗する",3],["float","フロウト","浮く",3],["fold","フォウルド","折る",3],["forgive","フォギヴ","許す",3],["greet","グリート","あいさつする",1],["guide","ガイド","案内する",3],["lay","レイ","置く・横たえる",3],["lift","リフト","持ち上げる",3],["pack","パック","荷造りする",3],["plant","プラント","植える",2],["pour","ポア","注ぐ",3],["pray","プレイ","祈る",3],["print","プリント","印刷する",3],["prove","プルーヴ","証明する",3],["punish","パニッシュ","罰する",3],["recommend","レコメンド","勧める",3],["reply","リプライ","返事をする",3],["rescue","レスキュー","救助する",1],["roll","ロウル","転がる",3],["rush","ラッシュ","急ぐ",3],["shine","シャイン","輝く",3],["shoot","シュート","撃つ・シュートする",3],["sink","スィンク","沈む",3],["skip","スキップ","飛ばす",3],["slide","スライド","滑る",3],["spell","スペル","つづる",1],["steal","スティール","盗む",3],["stretch","ストレッチ","伸ばす",3],["tie","タイ","結ぶ",3],["whisper","ウィスパー","ささやく",3],["wrap","ラップ","包む",3]],"名詞①社会・学び":[["culture","カルチャー","文化",1],["language","ラングウィッジ","言語",1],["information","インフォメイション","情報",1],["news","ニューズ","ニュース",1],["message","メスィッジ","伝言",1],["idea","アイディーア","考え",1],["problem","プロブレム","問題",1],["reason","リーズン","理由",1],["example","イグザンプル","例",1],["fact","ファクト","事実",1],["future","フューチャー","未来",1],["past","パスト","過去",1],["life","ライフ","生活・命",1],["dream","ドリーム","夢",1],["plan","プラン","計画",1],["chance","チャンス","機会",1],["event","イヴェント","行事",1],["activity","アクティヴィティ","活動",2],["experience","イクスピアリエンス","経験",1],["skill","スキル","技能",2],["job","ジョブ","仕事",1],["company","カンパニー","会社",1],["office","オフィス","事務所",2],["meeting","ミーティング","会議",1],["report","リポート","報告・レポート",2],["speech","スピーチ","スピーチ",2],["presentation","プレゼンテイション","発表",2],["interview","インタヴュー","面接・インタビュー",2],["volunteer","ヴォランティア","ボランティア",1],["tradition","トラディション","伝統",2],["custom","カスタム","習慣",2],["rule","ルール","規則",1],["law","ロー","法律",1],["war","ウォー","戦争",1],["peace","ピース","平和",1],["nature","ネイチャー","自然",1],["environment","インヴァイロンメント","環境",1],["energy","エナジー","エネルギー",1],["health","ヘルス","健康",1],["ceremony","セレモニー","式典",2]],"名詞②人・仕事":[["adult","アダルト","大人",2],["human","ヒューマン","人間",2],["member","メンバー","一員",1],["leader","リーダー","指導者",1],["captain","キャプテン","主将",2],["coach","コウチ","コーチ",2],["scientist","サイエンティスト","科学者",1],["artist","アーティスト","芸術家",2],["musician","ミュージシャン","音楽家",3],["actor","アクター","俳優",2],["writer","ライター","作家",2],["farmer","ファーマー","農家",3],["engineer","エンジニア","技術者",2],["pilot","パイロット","パイロット",2],["police officer","ポリースオフィサー","警察官",1],["firefighter","ファイアファイター","消防士",3],["driver","ドライヴァー","運転手",2],["chef","シェフ","料理長",3],["tourist","トゥアリスト","観光客",3],["visitor","ヴィジター","訪問者",3],["guest","ゲスト","客",2],["customer","カスタマー","顧客",2],["stranger","ストレインジャー","見知らぬ人",2],["foreigner","フォーリナー","外国人",3],["president","プレズィデント","大統領・社長",1],["owner","オウナー","所有者",2],["expert","エクスパート","専門家",2],["audience","オーディエンス","観客",2],["fan","ファン","ファン",2],["group","グループ","集団",1],["partner","パートナー","相棒",2],["character","キャラクター","登場人物・性格",2]],"名詞③場所・自然・もの":[["tower","タワー","塔",2],["airport","エアポート","空港",2],["church","チャーチ","教会",2],["factory","ファクトリー","工場",2],["theater","スィアター","劇場",2],["stadium","ステイディアム","競技場",2],["hall","ホール","ホール・会館",2],["area","エアリア","地域",1],["space","スペイス","宇宙・空間",2],["earth","アース","地球",1],["planet","プラネット","惑星",1],["ocean","オウシャン","大洋",2],["wave","ウェイヴ","波",1],["rock","ロック","岩",2],["stone","ストウン","石",2],["sand","サンド","砂",2],["ground","グラウンド","地面",2],["field","フィールド","野原・畑",2],["desert","デザート","砂漠",2],["jungle","ジャングル","ジャングル",3],["valley","ヴァリー","谷",2],["hill","ヒル","丘",2],["fire","ファイアー","火",2],["ice","アイス","氷",2],["air","エア","空気",2],["light","ライト","光",2],["sound","サウンド","音",2],["noise","ノイズ","騒音",2],["machine","マシーン","機械",1],["robot","ロウボット","ロボット",3],["tool","トゥール","道具",2],["paper","ペイパー","紙",1],["plastic","プラスティック","プラスチック",2],["bottle","ボトル","びん",1],["garbage","ガービッジ","ごみ",3],["medicine","メディスン","薬",1],["gift","ギフト","贈り物",1],["card","カード","カード",2],["stamp","スタンプ","切手",3],["smartphone","スマートフォウン","スマートフォン",3]],"名詞④暮らし・趣味・体":[["meal","ミール","食事",1],["dish","ディッシュ","料理・皿",1],["dessert","ディザート","デザート",3],["snack","スナック","軽食",3],["recipe","レスィピ","レシピ",3],["menu","メニュー","メニュー",3],["shopping","ショッピング","買い物",2],["price","プライス","値段",2],["internet","インターネット","インターネット",2],["website","ウェブサイト","ウェブサイト",2],["e-mail","イーメイル","電子メール",2],["video","ヴィディオウ","動画",2],["movie","ムーヴィ","映画",1],["concert","コンサート","コンサート",2],["contest","コンテスト","コンテスト",2],["race","レイス","競走",2],["match","マッチ","試合",2],["goal","ゴウル","目標・ゴール",1],["point","ポイント","点・要点",1],["prize","プライズ","賞",2],["tournament","トーナメント","トーナメント",2],["marathon","マラソン","マラソン",3],["hobby","ホビー","趣味",3],["comic","コミック","まんが",2],["magazine","マガズィーン","雑誌",2],["novel","ノヴェル","小説",2],["poem","ポウエム","詩",3],["painting","ペインティング","絵画",2],["heart","ハート","心・心臓",2],["mind","マインド","心・頭",2],["body","ボディ","体",1],["blood","ブラッド","血",2],["bone","ボウン","骨",2],["skin","スキン","肌",2],["voice","ヴォイス","声",1],["tear","ティア","涙",2],["feeling","フィーリング","気持ち",1],["fear","フィア","恐れ",2],["hope","ホウプ","希望",1],["joy","ジョイ","喜び",2],["anger","アンガー","怒り",2],["trouble","トラブル","困難",1],["danger","デインジャー","危険",2],["accident","アクスィデント","事故",2],["disease","ディズィーズ","病気",2],["fever","フィーヴァー","熱",3],["cold","コウルド","かぜ",2],["headache","ヘデイク","頭痛",3]],"名詞⑤学校・行事":[["adventure","アドヴェンチャー","冒険",3],["announcement","アナウンスメント","発表・お知らせ",3],["article","アーティクル","記事",2],["author","オーサー","著者",2],["beginning","ビギニング","始まり",2],["bench","ベンチ","ベンチ",3],["campaign","キャンペイン","キャンペーン",2],["candle","キャンドル","ろうそく",3],["champion","チャンピオン","優勝者",3],["choice","チョイス","選択",2],["comment","コメント","コメント",2],["competition","コンペティション","競争・大会",2],["diary","ダイアリー","日記",3],["drama","ドラマ","劇",3],["entrance","エントランス","入口",3],["exhibition","エキスィビション","展示会",3],["fashion","ファッション","流行",3],["gallery","ギャラリー","画廊",3],["graph","グラフ","グラフ",3],["host","ホウスト","主人・司会",3],["label","レイベル","ラベル",3],["list","リスト","一覧",2],["magic","マジック","魔法",3],["note","ノウト","メモ",2],["poster","ポウスター","ポスター",3],["record","レコード","記録",2],["schedule","スケジュール","予定",3],["step","ステップ","一歩・段",2],["title","タイトル","題名",2],["topic","トピック","話題",3],["tour","トゥア","ツアー",2],["trick","トリック","手品・いたずら",3]],"名詞⑥自然・科学":[["branch","ブランチ","枝",3],["bubble","バブル","泡",3],["cage","ケイジ","おり",3],["coast","コウスト","海岸",2],["cotton","コットン","綿",3],["countryside","カントリーサイド","田舎",3],["crop","クロップ","作物",3],["edge","エッジ","端",3],["feather","フェザー","羽",3],["flag","フラッグ","旗",3],["flood","フラッド","洪水",3],["flour","フラワー","小麦粉",3],["fog","フォグ","霧",3],["forecast","フォーキャスト","予報",3],["fuel","フューエル","燃料",3],["gas","ガス","ガス",2],["grain","グレイン","穀物",3],["harvest","ハーヴェスト","収穫",3],["height","ハイト","高さ",3],["length","レングス","長さ",3],["liquid","リクウィド","液体",3],["metal","メタル","金属",3],["mineral","ミネラル","鉱物",3],["net","ネット","網",3],["pot","ポット","鍋・つぼ",3],["root","ルート","根",3],["seed","スィード","種",3],["shadow","シャドウ","影",3],["shape","シェイプ","形",3],["shell","シェル","貝がら",3],["smoke","スモウク","煙",3],["soil","ソイル","土",3],["steam","スティーム","蒸気",3],["storm","ストーム","嵐",3],["sunlight","サンライト","日光",3],["surface","サーフィス","表面",3],["tail","テイル","しっぽ",3],["thunder","サンダー","雷",3],["wheel","ウィール","車輪",3],["wood","ウッド","木材",3],["wool","ウル","羊毛",3]],"名詞⑦社会・仕事":[["apartment","アパートメント","アパート",3],["appointment","アポイントメント","約束・予約",3],["boss","ボス","上司",3],["business","ビジネス","仕事・商売",2],["capital","キャピタル","首都",2],["cash","キャッシュ","現金",2],["cost","コスト","費用",2],["couple","カプル","夫婦・2人",2],["crowd","クラウド","群衆",3],["daughter","ドーター","娘",2],["delivery","デリヴァリー","配達",3],["department","ディパートメント","部門",2],["document","ドキュメント","書類",3],["employee","エンプロイイー","従業員",3],["fee","フィー","料金",3],["guard","ガード","警備員",3],["hometown","ホウムタウン","ふるさと",3],["judge","ジャッジ","裁判官・審査員",2],["kingdom","キングダム","王国",3],["lawyer","ローヤー","弁護士",3],["manner","マナー","作法",3],["nation","ネイション","国家",2],["palace","パレス","宮殿",3],["passenger","パセンジャー","乗客",3],["port","ポート","港",3],["professor","プロフェッサー","教授",2],["soldier","ソウルジャー","兵士",3],["thief","スィーフ","どろぼう",3],["wallet","ウォレット","財布",3],["worker","ワーカー","労働者",3]],"形容詞①":[["expensive","イクスペンスィヴ","高価な",1],["cheap","チープ","安い",1],["dangerous","デインジャラス","危険な",1],["safe","セイフ","安全な",1],["careless","ケアレス","不注意な",3],["exciting","イクサイティング","わくわくさせる",1],["boring","ボーリング","退屈な",1],["foreign","フォーリン","外国の",1],["international","インターナショナル","国際的な",1],["local","ロウカル","地元の",1],["traditional","トラディショナル","伝統的な",1],["useful","ユースフル","役に立つ",1],["necessary","ネセサリー","必要な",1],["possible","ポスィブル","可能な",1],["impossible","インポスィブル","不可能な",2],["real","リアル","本物の",1],["true","トゥルー","本当の",1],["perfect","パーフェクト","完璧な",1],["simple","スィンプル","簡単な・単純な",1],["strange","ストレインジ","奇妙な",1],["surprised","サプライズド","驚いた",1],["surprising","サプライジング","驚くべき",2],["worried","ワリード","心配して",1],["nervous","ナーヴァス","緊張して",1],["proud","プラウド","誇りに思う",1],["lonely","ロウンリー","さびしい",3],["friendly","フレンドリー","親しみやすい",1],["polite","ポライト","礼儀正しい",3],["honest","オネスト","正直な",2],["brave","ブレイヴ","勇敢な",2],["clever","クレヴァー","賢い",3],["smart","スマート","賢い",2],["quick","クウィック","すばやい",2],["deep","ディープ","深い",2],["wide","ワイド","広い",2],["narrow","ナロウ","せまい",2],["thick","スィック","厚い",2],["thin","スィン","薄い・やせた",2],["whole","ホウル","全体の",1],["healthy","ヘルシー","健康な",1]],"形容詞②・副詞":[["each","イーチ","それぞれの",1],["another","アナザー","もう一つの",1],["other","アザー","ほかの",1],["both","ボウス","両方の",1],["few","フュー","少しの",1],["several","セヴラル","いくつかの",1],["most","モウスト","ほとんどの",1],["own","オウン","自分自身の",1],["last","ラスト","最後の・この前の",1],["next","ネクスト","次の",1],["enough","イナフ","十分な",1],["quickly","クウィックリー","速く",1],["slowly","スロウリー","ゆっくり",1],["carefully","ケアフリー","注意深く",1],["easily","イージリー","簡単に",1],["suddenly","サドゥンリー","突然",1],["finally","ファイナリー","ついに",1],["probably","プロバブリー","おそらく",1],["maybe","メイビー","たぶん",1],["almost","オールモウスト","ほとんど",1],["already","オールレディ","すでに",1],["still","スティル","まだ",1],["yet","イェット","まだ・もう",1],["just","ジャスト","ちょうど",1],["even","イーヴン","〜でさえ",1],["only","オウンリー","〜だけ",1],["once","ワンス","一度・かつて",1],["twice","トゥワイス","二度",2],["ago","アゴウ","〜前に",1],["later","レイター","後で",1],["ever","エヴァー","今までに",1],["abroad","アブロード","外国へ",2],["everywhere","エヴリウェア","どこでも",2],["especially","イスペシャリー","特に",2],["however","ハウエヴァー","しかしながら",1],["anywhere","エニウェア","どこでも・どこにも",2]],"形容詞③":[["absent","アブセント","欠席の",3],["alive","アライヴ","生きている",3],["amazing","アメイズィング","驚くべき",2],["asleep","アスリープ","眠って",3],["awake","アウェイク","目が覚めて",3],["blind","ブラインド","目の見えない",3],["brilliant","ブリリアント","見事な",3],["calm","カーム","穏やかな",3],["central","セントラル","中心の",2],["comfortable","カンフォタブル","快適な",3],["crazy","クレイズィ","夢中な・ばかげた",2],["daily","デイリー","毎日の",2],["dead","デッド","死んだ",2],["elderly","エルダリー","年配の",3],["equal","イークワル","等しい",3],["excellent","エクセレント","優れた",3],["fair","フェア","公平な",2],["fantastic","ファンタスティック","すばらしい",3],["fat","ファット","太った",3],["female","フィーメイル","女性の",2],["fresh","フレッシュ","新鮮な",3],["frightened","フライトゥンド","おびえた",3],["giant","ジャイアント","巨大な",3],["huge","ヒュージ","巨大な",2],["ill","イル","病気の",3],["male","メイル","男性の",2],["mild","マイルド","穏やかな",3],["noisy","ノイズィ","うるさい",3],["pale","ペイル","青白い",3],["precious","プレシャス","貴重な",3],["rough","ラフ","荒い",3],["round","ラウンド","丸い",2],["scary","スケアリー","怖い",3],["sharp","シャープ","鋭い",3],["shy","シャイ","内気な",3],["silly","スィリー","ばかな",3],["smooth","スムーズ","なめらかな",3],["sour","サウア","酸っぱい",3],["spicy","スパイスィ","辛い",3],["tight","タイト","きつい",3],["tiny","タイニー","ごく小さい",3],["unusual","アンユージュアル","珍しい",3],["wild","ワイルド","野生の",3],["wise","ワイズ","賢い",3],["wooden","ウドゥン","木製の",3]],"副詞・前置詞②":[["ahead","アヘッド","前方に",2],["downstairs","ダウンステアズ","階下へ",3],["else","エルス","他に",2],["forever","フォーエヴァー","永遠に",3],["forward","フォーワード","前へ",2],["indoors","インドアズ","屋内で",3],["loudly","ラウドリー","大声で",3],["nowadays","ナウアデイズ","最近は",3],["outdoors","アウトドアズ","屋外で",3],["perhaps","パハップス","たぶん",2],["rather","ラザー","むしろ",2],["seldom","セルダム","めったに〜ない",3],["somewhere","サムウェア","どこかに",3],["straight","ストレイト","まっすぐに",2],["upstairs","アップステアズ","階上へ",3],["within","ウィズィン","〜以内に",2],["beyond","ビヨンド","〜を越えて",2],["except","イクセプト","〜を除いて",2],["toward","トワード","〜に向かって",3]],"接続詞・前置詞・助動詞":[["because","ビコーズ","なぜなら",1],["if","イフ","もし〜なら",1],["while","ワイル","〜する間に",1],["until","アンティル","〜まで",1],["since","スィンス","〜以来",1],["though","ゾウ","〜だけれども",1],["that","ザット","〜ということ",1],["during","デュアリング","〜の間",1],["through","スルー","〜を通って",1],["across","アクロス","〜を横切って",1],["along","アロング","〜に沿って",1],["between","ビトウィーン","〜の間に",1],["among","アマング","〜の中で",2],["behind","ビハインド","〜の後ろに",1],["without","ウィザウト","〜なしで",1],["against","アゲンスト","〜に反対して",1],["into","イントゥ","〜の中へ",1],["around","アラウンド","〜のまわりに",1],["will","ウィル","〜するだろう",1],["can","キャン","〜できる",1],["must","マスト","〜しなければならない",1],["should","シュッド","〜すべきだ",1],["may","メイ","〜してもよい",1],["could","クッド","〜できた",1],["would","ウッド","〜だろう",1],["shall","シャル","〜しましょうか",2]],"熟語・表現":[["be good at","ビーグッドアット","〜が得意だ",1],["be late for","ビーレイトフォー","〜に遅れる",2],["for the first time","フォーザファーストタイム","初めて",2],["go on","ゴウオン","続く",2],["take part in","テイクパートイン","〜に参加する",2],["get along with","ゲットアロングウィズ","〜と仲良くやる",3],["get off","ゲットオフ","降りる",2],["get on","ゲットオン","乗る",2],["make a mistake","メイクアミステイク","間違える",2],["one another","ワンアナザー","お互い",3],["wake up","ウェイクアップ","目覚める",1],["would like to","ウッドライクトゥ","〜したい",1],["as soon as","アズスーンアズ","〜するとすぐに",1],["more than","モアザン","〜より多く",1],["so that","ソウザット","〜するように",3],["used to","ユーストトゥ","以前は〜だった",3],["look forward to","ルックフォーワードトゥ","〜を楽しみに待つ",1],["take care of","テイクケアオヴ","〜の世話をする",1],["be interested in","ビーインタレスティッドイン","〜に興味がある",1],["be able to","ビーエイブルトゥ","〜できる",1],["have to","ハフトゥ","〜しなければならない",1],["be going to","ビーゴウイングトゥ","〜するつもりだ",1],["get up","ゲットアップ","起きる",1],["give up","ギヴアップ","あきらめる",1],["pick up","ピックアップ","拾う・迎えに行く",1],["put on","プットオン","身につける",1],["take off","テイクオフ","脱ぐ・離陸する",1],["turn on","ターンオン","（電気を）つける",1],["turn off","ターンオフ","（電気を）消す",1],["find out","ファインドアウト","見つけ出す",1],["come true","カムトゥルー","実現する",1],["each other","イーチアザー","お互い",1],["at first","アットファースト","最初は",2],["at last","アットラスト","ついに",2],["for example","フォーイグザンプル","例えば",1],["of course","オヴコース","もちろん",1],["a lot of","アロットオヴ","たくさんの",1],["a few","アフュー","少しの",1],["in front of","インフラントオヴ","〜の前に",1],["by the way","バイザウェイ","ところで",2],["all over the world","オールオウヴァーザワールド","世界中で",2],["be proud of","ビープラウドオヴ","〜を誇りに思う",2],["be afraid of","ビーアフレイドオヴ","〜をこわがる",2],["be famous for","ビーフェイマスフォー","〜で有名である",3],["grow up","グロウアップ","成長する",1],["run away","ランアウェイ","逃げる",3],["look for","ルックフォー","〜を探す",1],["look after","ルックアフター","〜の世話をする",1]]},"中3":{"動詞①":[["achieve","アチーヴ","達成する",1],["allow","アラウ","許す",1],["avoid","アヴォイド","避ける",1],["complete","コンプリート","完成させる",1],["connect","コネクト","つなぐ",2],["consider","コンスィダー","よく考える",1],["contain","コンテイン","含む",1],["depend","ディペンド","頼る・〜次第である",1],["develop","ディヴェロップ","発達させる",1],["encourage","インカリッジ","励ます",1],["express","イクスプレス","表現する",1],["exist","イグズィスト","存在する",2],["expect","イクスペクト","期待する",1],["face","フェイス","直面する",1],["gather","ギャザー","集める",2],["graduate","グラジュエイト","卒業する",1],["include","インクルード","含む",1],["influence","インフルエンス","影響を与える",1],["measure","メジャー","測る",2],["mention","メンション","言及する",2],["offer","オファー","提供する",1],["prefer","プリファー","〜のほうを好む",1],["produce","プロデュース","生産する",1],["promise","プロミス","約束する",1],["provide","プロヴァイド","供給する",1],["realize","リアライズ","気づく・実現する",1],["recognize","レコグナイズ","認識する",1],["reduce","リデュース","減らす",1],["refuse","リフューズ","断る",1],["remain","リメイン","残る・〜のままである",1],["replace","リプレイス","取り替える",1],["require","リクワイア","必要とする",1],["respect","リスペクト","尊敬する",1],["search","サーチ","探す",1],["seem","スィーム","〜のように思える",1],["serve","サーヴ","仕える・出す",1],["solve","ソルヴ","解決する",1],["succeed","サクスィード","成功する",1],["suffer","サファー","苦しむ",1],["suggest","サジェスト","提案する",1]],"動詞②":[["support","サポート","支える",1],["survive","サヴァイヴ","生き残る",1],["translate","トランスレイト","翻訳する",3],["treat","トリート","扱う・治療する",1],["trust","トラスト","信頼する",1],["apologize","アポロジャイズ","謝る",2],["attract","アトラクト","引きつける",2],["bother","ボザー","悩ませる",2],["breathe","ブリーズ","呼吸する",2],["cause","コーズ","引き起こす",1],["challenge","チャレンジ","挑戦する",1],["chase","チェイス","追いかける",2],["cheer","チア","応援する",2],["damage","ダミッジ","損害を与える",2],["deliver","ディリヴァー","配達する",1],["destroy","ディストロイ","破壊する",1],["disappoint","ディサポイント","失望させる",3],["donate","ドウネイト","寄付する",2],["earn","アーン","稼ぐ",1],["escape","イスケイプ","逃げる",1],["examine","イグザミン","調べる",2],["hang","ハング","掛ける",2],["hunt","ハント","狩る",2],["mix","ミックス","混ぜる",2],["observe","オブザーヴ","観察する",2],["overcome","オウヴァーカム","克服する",2],["participate","パーティスィペイト","参加する",1],["publish","パブリッシュ","出版する",2],["recycle","リーサイクル","再利用する",1],["rely","リライ","頼る",2],["repair","リペア","修理する",2],["scare","スケア","こわがらせる",2],["spread","スプレッド","広がる・広げる",1],["struggle","ストラグル","もがく・奮闘する",2],["surround","サラウンド","囲む",3],["throw away","スロウアウェイ","捨てる",3]],"動詞③":[["accept","アクセプト","受け入れる",1],["admit","アドミット","認める",2],["affect","アフェクト","影響する",1],["apply","アプライ","申し込む",1],["argue","アーギュー","議論する",3],["attend","アテンド","出席する",1],["behave","ビヘイヴ","ふるまう",3],["belong","ビロング","属する",3],["blame","ブレイム","責める",2],["claim","クレイム","主張する",2],["combine","コンバイン","結びつける",3],["concentrate","コンセントレイト","集中する",3],["confuse","コンフューズ","混乱させる",3],["contribute","コントリビュート","貢献する",3],["convince","コンヴィンス","納得させる",3],["decorate","デコレイト","飾る",3],["delay","ディレイ","遅らせる",3],["demand","ディマンド","要求する",2],["deny","ディナイ","否定する",3],["describe","ディスクライブ","描写する",1],["deserve","ディザーヴ","〜に値する",2],["determine","ディターミン","決定する",2],["disagree","ディサグリー","意見が合わない",3],["discuss","ディスカス","議論する",1],["educate","エデュケイト","教育する",3],["embarrass","エンバラス","恥ずかしがらせる",3],["employ","エンプロイ","雇う",3],["enable","イネイブル","可能にする",3],["establish","イスタブリッシュ","設立する",3],["estimate","エスティメイト","見積もる",3],["explore","イクスプロア","探検する",1]],"動詞④":[["gain","ゲイン","得る",2],["generate","ジェネレイト","生み出す",3],["handle","ハンドル","扱う",2],["harm","ハーム","害する",3],["identify","アイデンティファイ","特定する",2],["ignore","イグノア","無視する",3],["illustrate","イラストレイト","説明する・挿絵を描く",3],["impress","インプレス","感動させる",3],["indicate","インディケイト","示す",3],["inspire","インスパイア","奮い立たせる",3],["insist","インスィスト","主張する",3],["interpret","インタープリット","解釈する",3],["interrupt","インタラプト","さえぎる",3],["involve","インヴォルヴ","巻き込む",3],["maintain","メインテイン","維持する",2],["manage","マニッジ","管理する・なんとかする",3],["obtain","オブテイン","得る",3],["occur","オカー","起こる",3],["operate","オペレイト","操作する",3],["oppose","オポウズ","反対する",3],["organize","オーガナイズ","組織する",3],["persuade","パースウェイド","説得する",3],["possess","ポゼス","所有する",3],["predict","プリディクト","予測する",3],["prevent","プリヴェント","防ぐ",1],["purchase","パーチェス","購入する",2],["recover","リカヴァー","回復する",1],["refer","リファー","言及する",3],["reflect","リフレクト","反射する・反映する",3],["regret","リグレット","後悔する",3],["relate","リレイト","関係づける",3],["release","リリース","解放する・発売する",2],["remove","リムーヴ","取り除く",1],["represent","レプリゼント","代表する",2],["respond","リスポンド","応答する",3],["satisfy","サティスファイ","満足させる",3],["select","セレクト","選ぶ",1],["separate","セパレイト","分ける",2],["settle","セトル","解決する・定住する",3],["supply","サプライ","供給する",2],["surprise","サプライズ","驚かせる",2],["threaten","スレトゥン","脅す",3],["transport","トランスポート","輸送する",2],["upset","アプセット","動揺させる",2],["vary","ヴェアリー","変わる・異なる",3],["warn","ウォーン","警告する",3]],"名詞①社会・抽象":[["ability","アビリティ","能力",1],["advantage","アドヴァンティッジ","利点",1],["attitude","アティテュード","態度",1],["award","アウォード","賞",2],["behavior","ビヘイヴィヤー","行動",1],["century","センチュリー","世紀",1],["condition","コンディション","状態",1],["decision","ディスィジョン","決定",1],["difference","ディファレンス","違い",1],["disaster","ディザスター","災害",1],["earthquake","アースクウェイク","地震",2],["effort","エフォート","努力",1],["generation","ジェネレイション","世代",1],["government","ガヴァンメント","政府",1],["invention","インヴェンション","発明",1],["knowledge","ノリッジ","知識",1],["memory","メモリー","記憶",1],["opinion","オピニオン","意見",1],["opportunity","オポチューニティ","機会",1],["pollution","ポリューション","汚染",1],["population","ポピュレイション","人口",1],["poverty","ポヴァティ","貧困",2],["purpose","パーポス","目的",1],["relationship","リレイションシップ","関係",1],["research","リサーチ","研究",1],["resource","リソース","資源",1],["responsibility","リスポンスィビリティ","責任",1],["result","リザルト","結果",1],["situation","スィチュエイション","状況",1],["society","ソサイエティ","社会",1],["technology","テクノロジー","科学技術",1],["thought","ソート","考え",1],["truth","トゥルース","真実",1],["value","ヴァリュー","価値",1],["variety","ヴァライエティ","多様性",2],["wealth","ウェルス","富",2],["success","サクセス","成功",1],["failure","フェイリャー","失敗",1],["mistake","ミステイク","間違い",1],["effect","イフェクト","効果・影響",1]],"名詞②経済・学問":[["agriculture","アグリカルチャー","農業",2],["industry","インダストリー","産業",1],["economy","イコノミー","経済",1],["education","エデュケイション","教育",1],["university","ユーニヴァースィティ","大学",1],["college","カリッジ","大学",1],["degree","ディグリー","学位・度",2],["career","カリア","経歴",1],["salary","サラリー","給料",2],["tax","タックス","税",1],["trade","トレイド","貿易",1],["product","プロダクト","製品",1],["quality","クウォリティ","品質",1],["quantity","クウォンティティ","量",2],["amount","アマウント","量・額",1],["average","アヴェリッジ","平均",1],["percent","パーセント","パーセント",1],["rate","レイト","割合",1],["level","レヴェル","水準",1],["limit","リミット","限界",1],["benefit","ベネフィット","利益",1],["disadvantage","ディサドヴァンティッジ","不利な点",3],["evidence","エヴィデンス","証拠",1],["source","ソース","源・情報源",1],["symbol","スィンボル","象徴",1],["image","イミッジ","印象・画像",1],["view","ヴュー","眺め・見方",1],["aspect","アスペクト","側面",2],["detail","ディテイル","詳細",1],["item","アイテム","品目",2],["material","マティアリアル","材料",1],["structure","ストラクチャー","構造",2],["system","スィステム","制度・仕組み",1],["method","メソッド","方法",1],["process","プロセス","過程",1],["experiment","イクスペリメント","実験",1],["discovery","ディスカヴァリー","発見",2],["theory","スィオリー","理論",1],["treatment","トリートメント","治療",1],["nutrition","ニュートリション","栄養",2]],"名詞③地球・社会生活":[["climate","クライメット","気候",1],["temperature","テンパラチャー","温度・気温",1],["global warming","グロウバルウォーミング","地球温暖化",3],["recycling","リーサイクリング","リサイクル",3],["electricity","イレクトリスィティ","電気",1],["oil","オイル","石油",1],["coal","コウル","石炭",2],["species","スピーシーズ","種",1],["wildlife","ワイルドライフ","野生生物",2],["habitat","ハビタット","生息地",2],["universe","ユーニヴァース","宇宙",2],["gravity","グラヴィティ","重力",2],["vaccine","ヴァクスィーン","ワクチン",2],["diet","ダイエット","食事・食生活",2],["lifestyle","ライフスタイル","生活様式",2],["community","コミューニティ","地域社会",1],["charity","チャリティ","慈善",2],["refugee","レフュジー","難民",2],["immigrant","イミグラント","移民",2],["citizen","スィティズン","市民",1],["election","イレクション","選挙",1],["freedom","フリーダム","自由",1],["right","ライト","権利",1],["equality","イクウォリティ","平等",2],["justice","ジャスティス","正義",1],["religion","リリジョン","宗教",1],["politics","ポリティクス","政治",2],["media","ミーディア","メディア",1],["advertisement","アドヴァタイズメント","広告",3],["conversation","コンヴァセイション","会話",2],["communication","コミューニケイション","意思疎通",1],["relation","リレイション","関係",1]],"名詞④人・社会":[["access","アクセス","利用・接近",2],["advice","アドヴァイス","助言",2],["agreement","アグリーメント","合意",2],["ancestor","アンセスター","先祖",3],["anxiety","アングザイエティ","不安",3],["authority","オーソリティ","権威",2],["border","ボーダー","国境",2],["candidate","キャンディデイト","候補者",2],["category","キャテゴリー","分類",2],["colleague","コリーグ","同僚",3],["conflict","コンフリクト","争い",2],["consumer","コンシューマー","消費者",2],["contract","コントラクト","契約",2],["crime","クライム","犯罪",2],["crisis","クライスィス","危機",2],["debate","ディベイト","討論",2],["debt","デット","借金",2],["democracy","デモクラスィ","民主主義",3],["discrimination","ディスクリミネイション","差別",3],["emergency","イマージェンスィ","緊急事態",2],["employment","エンプロイメント","雇用",3],["fault","フォールト","過失",2],["identity","アイデンティティ","自己同一性",2],["independence","インディペンデンス","独立",2],["individual","インディヴィジュアル","個人",2],["insurance","インシュアランス","保険",2],["labor","レイバー","労働",2],["liberty","リバティ","自由",3],["majority","マジョリティ","大多数",2],["minority","マイノリティ","少数派",3],["neighborhood","ネイバーフッド","近所",3],["participant","パーティスィパント","参加者",3],["permission","パーミッション","許可",3],["principle","プリンスィプル","原則",3],["priority","プライオリティ","優先事項",3],["privacy","プライヴァスィ","プライバシー",3],["property","プロパティ","財産",2],["reputation","レピュテイション","評判",3],["security","セキュリティ","安全",2],["slavery","スレイヴァリー","奴隷制",3],["status","ステイタス","地位",2],["strategy","ストラテジー","戦略",2],["victim","ヴィクティム","被害者",3],["welfare","ウェルフェア","福祉",3],["witness","ウィットネス","目撃者",3]],"名詞⑤環境・科学":[["atmosphere","アトモスフィア","大気・雰囲気",3],["atom","アトム","原子",3],["biology","バイオロジー","生物学",3],["carbon","カーボン","炭素",3],["cell","セル","細胞",2],["chemical","ケミカル","化学物質",2],["conservation","コンサヴェイション","保護",3],["creature","クリーチャー","生き物",3],["data","デイタ","データ",2],["decade","デケイド","10年間",3],["device","ディヴァイス","装置",2],["distance","ディスタンス","距離",2],["drought","ドラウト","干ばつ",3],["ecosystem","イーコスィステム","生態系",3],["efficiency","イフィシェンスィ","効率",3],["element","エレメント","要素",3],["equipment","イクウィップメント","装備",2],["evolution","エヴォルーション","進化",3],["extinction","イクスティンクション","絶滅",3],["factor","ファクター","要因",2],["fossil","フォスィル","化石",3],["hydrogen","ハイドロジェン","水素",3],["infection","インフェクション","感染",3],["laboratory","ラボラトリー","実験室",3],["layer","レイヤー","層",3],["organism","オーガニズム","生物",3],["oxygen","オクスィジェン","酸素",3],["particle","パーティクル","粒子",3],["radiation","レイディエイション","放射線",3],["rainforest","レインフォレスト","熱帯雨林",3],["satellite","サテライト","衛星",3],["scale","スケイル","規模",2],["shortage","ショーテッジ","不足",3],["substance","サブスタンス","物質",3],["surgery","サージャリー","手術",2],["symptom","スィンプトム","症状",3],["tissue","ティシュー","組織",3],["vitamin","ヴァイタミン","ビタミン",3],["volume","ヴォリューム","量・音量",2]],"名詞⑥心・気持ち":[["aim","エイム","目的",3],["approach","アプロウチ","取り組み方",2],["assumption","アサンプション","仮定",3],["attempt","アテンプト","試み",2],["awareness","アウェアネス","認識",3],["belief","ビリーフ","信念",3],["capacity","キャパスィティ","能力・収容力",2],["circumstance","サーカムスタンス","状況",3],["comfort","カンフォート","快適さ",3],["concept","コンセプト","概念",2],["concern","コンサーン","心配",2],["confidence","コンフィデンス","自信",2],["consequence","コンスィクウェンス","結果",3],["contrast","コントラスト","対照",3],["creativity","クリエイティヴィティ","創造性",3],["curiosity","キュリオスィティ","好奇心",3],["desire","ディザイア","願望",2],["doubt","ダウト","疑い",2],["emotion","イモウション","感情",3],["emphasis","エンファスィス","強調",3],["encouragement","インカレッジメント","励まし",3],["essence","エッセンス","本質",3],["expectation","エクスペクテイション","期待",3],["faith","フェイス","信頼・信仰",2],["fantasy","ファンタスィ","空想",3],["flexibility","フレクスィビリティ","柔軟性",3],["focus","フォウカス","焦点",2],["foundation","ファウンデイション","土台",2],["frustration","フラストレイション","欲求不満",3],["guilt","ギルト","罪悪感",3]],"名詞⑦考え・価値":[["imagination","イマジネイション","想像力",3],["impact","インパクト","影響",2],["impression","インプレッション","印象",3],["inspiration","インスピレイション","ひらめき",3],["intention","インテンション","意図",3],["interpretation","インタープリテイション","解釈",3],["logic","ロジック","論理",3],["motivation","モウティヴェイション","動機",3],["passion","パッション","情熱",3],["patience","ペイシェンス","忍耐",3],["perspective","パースペクティヴ","視点",3],["philosophy","フィロソフィー","哲学",3],["possibility","ポスィビリティ","可能性",2],["potential","ポテンシャル","潜在力",2],["prejudice","プレジュディス","偏見",3],["pride","プライド","誇り",3],["reaction","リアクション","反応",2],["reference","レファレンス","参照",2],["relief","リリーフ","安心",3],["satisfaction","サティスファクション","満足",3],["scheme","スキーム","計画",2],["sense","センス","感覚",2],["significance","スィグニフィカンス","重要性",3],["sorrow","ソロウ","悲しみ",3],["stress","ストレス","ストレス",2],["sympathy","スィンパスィ","同情",3],["tendency","テンデンスィ","傾向",3],["tension","テンション","緊張",3],["vision","ヴィジョン","視覚・展望",2],["wisdom","ウィズダム","知恵",3]],"形容詞①":[["ancient","エインシェント","古代の",2],["available","アヴェイラブル","利用できる",1],["common","コモン","共通の・ふつうの",1],["confident","コンフィデント","自信のある",1],["convenient","コンヴィーニエント","便利な",1],["digital","ディジタル","デジタルの",1],["effective","イフェクティヴ","効果的な",1],["efficient","イフィシェント","効率的な",1],["environmental","インヴァイロンメンタル","環境の",1],["global","グロウバル","地球規模の",1],["modern","モダン","現代の",1],["natural","ナチュラル","自然の",1],["negative","ネガティヴ","否定的な",1],["positive","ポズィティヴ","肯定的な",1],["official","オフィシャル","公式の",1],["physical","フィズィカル","身体の",1],["mental","メンタル","精神の",1],["powerful","パワフル","力強い",1],["recent","リースント","最近の",1],["responsible","リスポンスィブル","責任がある",1],["similar","スィミラー","似ている",1],["social","ソウシャル","社会の",1],["successful","サクセスフル","成功した",1],["various","ヴェアリアス","さまざまな",1],["valuable","ヴァリュアブル","価値のある",1],["ordinary","オーディネリー","ふつうの",1],["unique","ユニーク","独特の",1],["particular","パティキュラー","特定の",1],["general","ジェネラル","一般的な",1],["specific","スペスィフィック","具体的な",1],["obvious","オブヴィアス","明らかな",1],["familiar","ファミリアー","よく知っている",1],["patient","ペイシェント","忍耐強い",1],["generous","ジェネラス","気前のよい",2],["independent","インディペンデント","独立した",1],["creative","クリエイティヴ","創造的な",1],["curious","キュアリアス","好奇心の強い",1],["serious","スィリアス","深刻な・真剣な",1],["silent","サイレント","静かな",2],["complex","コンプレックス","複雑な",2]],"形容詞②":[["academic","アカデミック","学問の",2],["accurate","アキュレット","正確な",2],["active","アクティヴ","活動的な",2],["actual","アクチュアル","実際の",2],["additional","アディショナル","追加の",2],["advanced","アドヴァンスト","進んだ",2],["alternative","オルターナティヴ","代わりの",2],["annual","アニュアル","毎年の",2],["appropriate","アプロウプリエット","適切な",2],["artificial","アーティフィシャル","人工の",3],["aware","アウェア","気づいて",2],["basic","ベイスィック","基本的な",2],["brief","ブリーフ","短い",3],["capable","ケイパブル","能力がある",2],["commercial","コマーシャル","商業の",2],["constant","コンスタント","一定の",3],["critical","クリティカル","重大な・批判的な",2],["cultural","カルチュラル","文化の",2],["current","カレント","現在の",2],["distant","ディスタント","遠い",3],["domestic","ドメスティック","国内の",2],["economic","エコノミック","経済の",2],["electronic","イレクトロニック","電子の",3],["enormous","イノーマス","巨大な",3],["entire","インタイア","全体の",2],["essential","イセンシャル","不可欠な",2],["excessive","イクセスィヴ","過度の",3],["financial","ファイナンシャル","財政の",2],["frequent","フリークウェント","頻繁な",3],["fundamental","ファンダメンタル","根本的な",3],["genuine","ジェニュイン","本物の",3],["harmful","ハームフル","有害な",3],["immediate","イミーディエット","即座の",3],["industrial","インダストリアル","産業の",2],["intelligent","インテリジェント","知的な",3],["internal","インターナル","内部の",2],["legal","リーガル","法律の",2],["medical","メディカル","医学の",2]],"形容詞③":[["military","ミリタリー","軍の",2],["moral","モラル","道徳の",3],["mutual","ミューチュアル","相互の",3],["nuclear","ニュークリア","核の",2],["permanent","パーマネント","永久の",2],["political","ポリティカル","政治の",2],["practical","プラクティカル","実用的な",3],["previous","プリーヴィアス","前の",2],["primary","プライマリー","主要な・初等の",2],["private","プライヴェット","私的な",2],["professional","プロフェッショナル","専門的な",2],["rapid","ラピッド","急速な",3],["rare","レア","珍しい",2],["reasonable","リーズナブル","妥当な",2],["relevant","レレヴァント","関連のある",2],["reliable","リライアブル","信頼できる",3],["remarkable","リマーカブル","注目すべき",3],["scientific","サイエンティフィック","科学的な",2],["senior","スィーニア","年上の",2],["sensitive","センスィティヴ","敏感な",3],["severe","スィヴィア","厳しい",3],["significant","スィグニフィカント","重要な",2],["solar","ソウラー","太陽の",3],["spiritual","スピリチュアル","精神的な",3],["steady","ステディ","安定した",3],["sufficient","サフィシェント","十分な",3],["suitable","スータブル","適した",3],["temporary","テンポラリー","一時的な",3],["toxic","トクスィック","有毒な",3],["typical","ティピカル","典型的な",2],["universal","ユニヴァーサル","普遍的な",3],["urban","アーバン","都市の",2],["rural","ルーラル","田舎の",2],["vast","ヴァスト","広大な",3],["visible","ヴィズィブル","目に見える",3],["visual","ヴィジュアル","視覚の",3],["vital","ヴァイタル","極めて重要な",3],["willing","ウィリング","進んで〜する",2]],"副詞・接続詞①":[["actually","アクチュアリー","実際は",1],["exactly","イグザクトリー","正確に",1],["immediately","イミーディエトリー","すぐに",1],["instead","インステッド","代わりに",1],["mostly","モウストリー","たいてい",1],["nearly","ニアリー","ほとんど",1],["originally","オリジナリー","もともと",2],["recently","リースントリー","最近",1],["therefore","ゼアフォー","したがって",1],["otherwise","アザワイズ","さもなければ",1],["moreover","モアオウヴァー","さらに",2],["anyway","エニウェイ","とにかく",1],["certainly","サートゥンリー","確かに",1],["clearly","クリアリー","明らかに",1],["completely","コンプリートリー","完全に",1],["directly","ディレクトリー","直接",1],["gradually","グラジュアリー","だんだん",1],["hardly","ハードリー","ほとんど〜ない",2],["mainly","メインリー","主に",1],["naturally","ナチュラリー","自然に",1],["rarely","レアリー","めったに〜ない",2],["seriously","スィリアスリー","真剣に",2],["simply","スィンプリー","単に",1],["unfortunately","アンフォーチュネトリー","残念ながら",1],["whether","ウェザー","〜かどうか",1],["unless","アンレス","〜しない限り",1],["although","オールゾウ","〜だけれども",1],["despite","ディスパイト","〜にもかかわらず",1],["according to","アコーディングトゥ","〜によれば",1],["as well as","アズウェルアズ","〜だけでなく",1],["in order to","インオーダートゥ","〜するために",1],["thanks to","サンクストゥ","〜のおかげで",1],["instead of","インステッドオヴ","〜の代わりに",1],["such as","サッチアズ","〜のような",1],["in spite of","インスパイトオヴ","〜にもかかわらず",3],["at least","アットリースト","少なくとも",1]],"副詞・接続詞②":[["absolutely","アブソルートリー","絶対に",2],["altogether","オールトゥゲザー","全部で",3],["apparently","アパレントリー","どうやら",2],["approximately","アプロクスィメットリー","およそ",2],["basically","ベイスィカリー","基本的に",2],["besides","ビサイズ","そのうえ",2],["briefly","ブリーフリー","手短に",3],["consequently","コンスィクウェントリー","その結果",3],["constantly","コンスタントリー","絶えず",3],["definitely","デフィニットリー","間違いなく",2],["eventually","イヴェンチュアリー","結局",2],["extremely","イクストリームリー","極めて",2],["fairly","フェアリー","かなり",3],["frequently","フリークウェントリー","頻繁に",3],["furthermore","ファーザーモア","さらに",3],["generally","ジェネラリー","一般に",2],["increasingly","インクリースィングリー","ますます",3],["largely","ラージリー","主に",2],["likewise","ライクワイズ","同様に",3],["meanwhile","ミーンワイル","その間に",3],["merely","ミアリー","単に",3],["nevertheless","ネヴァザレス","それにもかかわらず",3],["obviously","オブヴィアスリー","明らかに",2],["occasionally","オケイジョナリー","時々",3],["partly","パートリー","部分的に",3],["possibly","ポスィブリー","ことによると",2],["previously","プリーヴィアスリー","以前に",2],["primarily","プライメリリー","主に",3],["rapidly","ラピッドリー","急速に",3],["regularly","レギュラリー","定期的に",3],["relatively","レラティヴリー","比較的",2],["roughly","ラフリー","おおよそ",3],["separately","セパレットリー","別々に",3],["significantly","スィグニフィカントリー","著しく",3],["similarly","スィミラリー","同様に",3],["slightly","スライトリー","わずかに",2],["specifically","スペスィフィカリー","具体的には",2],["thus","ザス","このように",2],["totally","トウタリー","完全に",2],["truly","トゥルーリー","本当に",2],["ultimately","アルティメットリー","最終的に",2],["widely","ワイドリー","広く",3]],"熟語・表現":[["as a result","アズアリザルト","その結果",1],["be based on","ビーベイストオン","〜に基づく",2],["be covered with","ビーカヴァードウィズ","〜で覆われている",2],["be filled with","ビーフィルドウィズ","〜でいっぱいである",2],["be known as","ビーノウンアズ","〜として知られる",1],["be made of","ビーメイドオヴ","〜でできている",1],["be surprised at","ビーサプライズドアット","〜に驚く",2],["bring up","ブリングアップ","育てる",2],["carry out","キャリーアウト","実行する",2],["come up with","カムアップウィズ","思いつく",2],["deal with","ディールウィズ","対処する",1],["depend on","ディペンドオン","〜に頼る",1],["figure out","フィギュアアウト","理解する",3],["get rid of","ゲットリッドオヴ","取り除く",3],["get over","ゲットオウヴァー","乗り越える",2],["hand in","ハンドイン","提出する",3],["in addition","インアディション","さらに",1],["in fact","インファクト","実は",1],["keep in mind","キープインマインド","心に留める",3],["make sense","メイクセンス","意味をなす",2],["make sure","メイクシュア","確かめる",1],["no longer","ノウロンガー","もはや〜ない",1],["on the other hand","オンジアザーハンド","一方で",3],["pay attention to","ペイアテンショントゥ","〜に注意を払う",2],["point out","ポイントアウト","指摘する",1],["put off","プットオフ","延期する",3],["result in","リザルトイン","〜という結果になる",3],["run out of","ランアウトオヴ","〜を使い果たす",3],["set up","セットアップ","設立する",1],["take place","テイクプレイス","行われる",1],["turn out","ターンアウト","〜だと判明する",3],["be responsible for","ビーリスポンスィブルフォー","〜に責任がある",3],["be worth","ビーワース","〜の価値がある",3],["in the long run","インザロングラン","長い目で見れば",3],["so far","ソウファー","これまでのところ",2]]}};
+const GRADES = ["中1","中2","中3"];
+const MODES = [["flash","📖 フラッシュ"],["quiz","🎯 クイズ"],["type","⌨️ タイピング"]];
+
+// ── データ整形 ──
+const DB = {};
+GRADES.forEach(g=>{DB[g]={};for(const c in RAW[g]){DB[g][c]=RAW[g][c].map(([en,pron,ja,lv])=>({id:g+"|"+c+"|"+en,g,c,en,pron,ja,lv:lv||2}));}});
+const ALL = GRADES.flatMap(g=>Object.values(DB[g]).flat());
+
+// ── 保存 ──
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+          set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let weak = new Set(LS.get("em.weak",[]));
+const saveWeak=()=>LS.set("em.weak",[...weak]);
+
+// ── 状態 ──
+const S = {grade:LS.get("em.grade","中1"), mode:LS.get("em.mode","flash"), cat:null, lv:LS.get("em.lv",0),
+  words:[], q:[], i:0, score:0, streak:0, studied:0, total:0, correct:0,
+  answered:false, revealed:false, cur:null, enToJa:true, sessionWrong:new Set()};
+if(S.grade==="weak" && !weak.size) S.grade="中1";
+
+// ── 音声（ボタンを押した時だけ） ──
+let voiceEN=null;
+function pickVoice(){ if(!window.speechSynthesis) return;
+  const vs=speechSynthesis.getVoices(); if(!vs.length) return;
+  voiceEN = vs.find(v=>/en[-_]US/i.test(v.lang)&&/Samantha/i.test(v.name))
+         || vs.find(v=>/en[-_]US/i.test(v.lang)) || vs.find(v=>/^en/i.test(v.lang)) || null; }
+if(window.speechSynthesis){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
+function speak(t){ if(!t||!window.speechSynthesis) return;
+  speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t);
+  u.lang="en-US"; if(voiceEN) u.voice=voiceEN; u.rate=.85; u.pitch=1; speechSynthesis.speak(u); }
+
+// ── ヘルパー ──
+const $=id=>document.getElementById(id);
+const show=id=>$(id).classList.remove("hidden"), hide=id=>$(id).classList.add("hidden");
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function catsFor(g){ if(g!=="weak") return Object.keys(DB[g]);
+  const gs=GRADES.filter(x=>ALL.some(w=>w.g===x&&weak.has(w.id))); return gs.length?["すべて",...gs]:[]; }
+const LEVELS=[[0,"すべて"],[1,"★ 超基本"],[2,"★★ 基本"],[3,"★★★ 発展"]];
+function lvFilter(a){ return S.lv ? a.filter(w=>w.lv===S.lv) : a; }
+function wordsFor(g,c){ if(g!=="weak") return lvFilter(DB[g][c]||[]);
+  return lvFilter(ALL.filter(w=>weak.has(w.id)&&(c==="すべて"||w.g===c))); }
+function drawLvs(){ const el=$("lvs"); el.innerHTML=""; LEVELS.forEach(([v,l])=>{const b=document.createElement("button");
+  b.className="cat"+(S.lv===v?" on":""); const n=S.grade==="weak"?ALL.filter(w=>weak.has(w.id)&&(!v||w.lv===v)).length:Object.values(DB[S.grade]).flat().filter(w=>!v||w.lv===v).length;
+  b.textContent=l+" "+n; b.onclick=()=>setLv(v); el.appendChild(b);}); }
+function setLv(v){ S.lv=v; LS.set("em.lv",v); drawLvs(); drawCats(); startSession(); }
+
+// ── UI構築 ──
+function drawSegs(){
+  $("segGrade").innerHTML = [...GRADES.map(g=>`<button class="${S.grade===g?"on":""}" onclick="setGrade('${g}')">${g}</button>`),
+    `<button class="${S.grade==="weak"?"on":""}" onclick="setGrade('weak')">苦手<small>${weak.size}</small></button>`].join("");
+  $("segMode").innerHTML = MODES.map(([k,l])=>`<button class="${S.mode===k?"on":""}" onclick="setMode('${k}')">${l}</button>`).join("");
+}
+function drawCats(){
+  const el=$("cats"); el.innerHTML="";
+  catsFor(S.grade).forEach(c=>{const b=document.createElement("button");b.className="cat"+(c===S.cat?" on":"");
+    b.textContent=c; b.onclick=()=>setCat(c); el.appendChild(b);});
+  const on=el.querySelector(".on"); if(on) on.scrollIntoView({inline:"center",block:"nearest"});
+}
+function setGrade(g){ S.grade=g; LS.set("em.grade",g); const cs=catsFor(g); S.cat=cs[0]||null; drawSegs(); drawLvs(); drawCats(); startSession(); }
+function setMode(m){ S.mode=m; LS.set("em.mode",m); drawSegs(); startSession(); }
+function setCat(c){ S.cat=c; drawCats(); startSession(); }
+
+function startSession(){
+  S.words = S.cat ? wordsFor(S.grade,S.cat) : [];
+  S.q=shuffle([...S.words]); S.i=0; S.score=S.streak=S.studied=S.total=S.correct=0; S.sessionWrong=new Set();
+  stats(); hide("result"); show("card"); show("bottom"); render();
+}
+function stats(){ $("stScore").textContent=S.score; $("stStreak").textContent=S.streak; $("stStudied").textContent=S.studied; }
+
+function setBtns(l,r){ // [text,class,fn] / null
+  const L=$("bL"),R=$("bR");
+  [[L,l],[R,r]].forEach(([b,d])=>{ if(!d){b.classList.add("hidden");return;} b.classList.remove("hidden");
+    b.textContent=d[0]; b.className="btn "+(d[1]||""); b.onclick=d[2]; });
+}
+
+// ── 描画 ──
+function render(){
+  const card=$("card");
+  hide("wp"); hide("choices"); hide("inp"); hide("ans"); card.classList.remove("grow");
+  $("fb").textContent=""; $("fb").className="fb"; $("pron").textContent=""; $("tap").style.display="none";
+  if(!S.words.length){ // 苦手なし
+    $("lbl").textContent=""; $("word").textContent="🎉"; $("word").className="word";
+    $("pron").innerHTML='<span class="empty">'+(S.grade==="weak"?"苦手な単語はありません<br>クイズやタイピングで間違えた単語がここに集まります":"このレベルの単語はこのカテゴリにありません<br>レベルを「すべて」にするか別のカテゴリを選んでください")+'</span>';
+    card.classList.add("grow"); $("play").style.display="none"; hide("bottom"); $("pcount").textContent=""; return;
+  }
+  if(S.i>=S.q.length){ result(); return; }
+  const w=S.q[S.i]; S.cur=w; S.answered=false; S.revealed=false; S.enToJa=Math.random()<.5;
+  $("play").style.display="flex"; card.classList.add("grow");
+  $("pfill").style.width=Math.round(S.i/S.q.length*100)+"%"; $("pcount").textContent=(S.i+1)+" / "+S.q.length;
+  if(S.mode==="flash") showFlash(w); else if(S.mode==="quiz") showQuiz(w); else showType(w);
+  card.classList.remove("in"); void card.offsetWidth; card.classList.add("in");
+}
+function setWord(t,isJa){ $("word").textContent=t; $("word").className="word"+(isJa?" ja":""); }
+
+function showFlash(w){
+  $("lbl").textContent=S.enToJa?"英語 → 日本語":"日本語 → 英語";
+  setWord(S.enToJa?w.en:w.ja, !S.enToJa);
+  $("ans").textContent=S.enToJa?w.ja:w.en; $("tap").style.display="block";
+  setBtns(["← 戻る","",prev],["答えを見る","pri",reveal]);
+}
+function reveal(){
+  if(S.revealed) return; S.revealed=true; S.studied++; stats();
+  show("ans"); $("pron").textContent="[ "+S.cur.pron+" ]"; $("tap").style.display="none";
+  setBtns(["まだ","ng",()=>grade(false)],["覚えた ✓","ok",()=>grade(true)]);
+}
+function grade(ok){ if(ok) weak.delete(S.cur.id); else { weak.add(S.cur.id); S.sessionWrong.add(S.cur.id); } saveWeak(); drawSegs(); next(); }
+function onCard(){ if(S.mode!=="flash") return; S.revealed?next():reveal(); }
+
+function showQuiz(w){
+  $("lbl").textContent=S.enToJa?"日本語は？":"英語は？";
+  setWord(S.enToJa?w.en:w.ja, !S.enToJa);
+  const key=S.enToJa?"ja":"en", correct=w[key];
+  let pool=DB[w.g][w.c].filter(x=>x[key]!==correct);
+  if(pool.length<3) pool=Object.values(DB[w.g]).flat().filter(x=>x[key]!==correct);
+  const seen=new Set([correct]); const wrongs=[];
+  for(const x of shuffle([...pool])){ if(!seen.has(x[key])){seen.add(x[key]);wrongs.push(x[key]);} if(wrongs.length===3) break; }
+  const el=$("choices"); el.innerHTML="";
+  shuffle([correct,...wrongs]).forEach(o=>{const b=document.createElement("button");b.className="ch";b.textContent=o;
+    b.onclick=()=>pick(b,o,correct);el.appendChild(b);});
+  show("choices"); setBtns(["← 戻る","",prev],["スキップ →","",next]);
+}
+function pick(btn,sel,correct){
+  if(S.answered) return; S.answered=true; S.total++; S.studied++;
+  document.querySelectorAll(".ch").forEach(b=>{b.disabled=true;
+    if(b.textContent===correct){b.classList.add("ok");b.innerHTML=correct+"<small>[ "+S.cur.pron+" ]</small>";}});
+  if(sel===correct){ S.score++; S.streak++; S.correct++; weak.delete(S.cur.id); saveWeak(); feedback(true);
+    if(S.streak>=3) toast(); stats(); setTimeout(next,1000); }
+  else{ btn.classList.add("ng"); S.streak=0; weak.add(S.cur.id); S.sessionWrong.add(S.cur.id); saveWeak(); feedback(false);
+    wrongPanel(S.cur, S.enToJa?null:sel); stats(); setBtns(["← 戻る","",prev],["次へ →","pri",next]); }
+  drawSegs();
+}
+
+function showType(w){
+  $("lbl").textContent="英語でつづりを入力"; setWord(w.ja,true);
+  const inp=$("inp"); inp.value=""; inp.className="inp"; inp.disabled=false; show("inp");
+  inp.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); S.answered?next():check(); } };
+  setBtns(["← 戻る","",prev],["確認 ✓","pri",check]);
+}
+function check(){
+  if(S.answered) return; const inp=$("inp"), w=S.cur, v=inp.value.trim().toLowerCase();
+  if(!v) return; S.answered=true; S.total++; S.studied++; inp.disabled=true; inp.blur();
+  $("pron").textContent="[ "+w.pron+" ]";
+  if(v===w.en.toLowerCase()){ inp.className="inp ok"; S.score++; S.streak++; S.correct++; weak.delete(w.id); saveWeak();
+    feedback(true); if(S.streak>=3) toast(); stats(); setTimeout(next,1000); }
+  else{ inp.className="inp ng"; S.streak=0; weak.add(w.id); S.sessionWrong.add(w.id); saveWeak(); feedback(false);
+    wrongPanel(w, inp.value.trim()); stats(); setBtns(["← 戻る","",prev],["次へ →","pri",next]); }
+  drawSegs();
+}
+
+function wrongPanel(w,yours){
+  $("wpWord").textContent=w.en; $("wpPron").textContent="[ "+w.pron+" ]"; $("wpJa").textContent=w.ja;
+  $("wpYours").innerHTML = yours ? "あなたの答え：<s>"+esc(yours)+"</s>" : "";
+  const t=$("tiles"); t.innerHTML="";
+  [...w.en].forEach(ch=>{const d=document.createElement("div");d.className="tile"+(ch===" "?" sp":"");d.textContent=ch===" "?"":ch;t.appendChild(d);});
+  $("card").classList.remove("grow"); show("wp");
+}
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function feedback(ok){ const f=$("fb");
+  f.textContent = ok ? ["すごい！🎉","その調子！✨","パーフェクト ⭐","よくできました 🌟","Great! 👏"][Math.random()*5|0] : "おしい… しっかり覚えよう";
+  f.className="fb "+(ok?"ok":"ng"); }
+function toast(){ document.querySelector(".toast")?.remove(); const t=document.createElement("div");
+  t.className="toast"; t.textContent="🔥 "+S.streak+"連続正解！"; document.body.appendChild(t); setTimeout(()=>t.remove(),2200); }
+
+function next(){ S.i++; render(); }
+function prev(){ if(S.i>0){ S.i--; render(); } }
+
+function result(){
+  hide("card"); hide("wp"); hide("choices"); hide("inp"); hide("bottom"); $("fb").textContent="";
+  $("pfill").style.width="100%"; $("pcount").textContent="";
+  const n=S.q.length, wrong=S.sessionWrong.size;
+  if(S.mode==="flash"){ $("rEmo").textContent="📖"; $("rScore").innerHTML=n+' <span>枚</span>';
+    $("rMsg").textContent = wrong ? "「まだ」が "+wrong+" 語 → 苦手に登録しました" : "全部「覚えた」！すばらしい"; }
+  else{ const pct=S.total?Math.round(S.correct/S.total*100):0;
+    $("rEmo").textContent=pct>=90?"🏆":pct>=70?"🎉":"💪"; $("rScore").innerHTML=S.correct+' <span>/ '+S.total+'</span>';
+    $("rMsg").textContent=(pct>=90?"完璧に近い！":pct>=70?"よくできました":"もう一回やろう")+"（正答率 "+pct+"%）"; }
+  $("rWeak").classList.toggle("hidden", !weak.size || S.grade==="weak");
+  show("result");
+}
+
+// ── 起動 ──
+S.cat = catsFor(S.grade)[0]||null; drawSegs(); drawLvs(); drawCats(); startSession();
+</script>
+</body>
+</html>
